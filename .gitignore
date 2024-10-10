@@ -1,2 +1,2 @@
-./DroodleUI/ui/node_modules/*
 .env
+/DroodleUI/ui/node_modules
