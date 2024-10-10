@@ -1,0 +1,3 @@
+droodles/droodleExample.jpg
+droodles/droodleExample2.jpg
+droodles/droodleExample3.jpg

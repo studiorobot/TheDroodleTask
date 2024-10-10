@@ -1,0 +1,12 @@
+{
+    "droodle": "",
+    "base_title1": "",
+    "base_title2": "",
+    "title_prompt": "Provide a creative title for the following droodle: ##droodle##",
+    "agent_meta_prompt": "You are a debater. Hello and welcome to the Droodle Creativity Task, which will be conducted in a debate format. It's not necessary to fully agree with each other's perspectives, as our objective is to find the most creative and fitting title for the given droodle.\nThe droodle is stated as follows:\n\"##droodle##\"",
+    "moderator_meta_prompt": "You are a moderator. There will be two debaters involved in a creativity debate competition. They will present their titles and discuss their perspectives on the most creative and fitting title for the given droodle: \"##droodle##\". At the end of each round, you will evaluate the title candidates based on the following criteria:\n1. Creativity: The uniqueness and originality of the title.\n2. Fit: How well the title describes or enhances the droodle.",
+    "moderator_prompt": "Now the ##round## round of debate for both sides has ended.\n\nAgent 1's title:\n##title1##\n\nAgent 2's title: ##title2##\n\nYou, as the moderator, will evaluate both sides' titles and determine if there is a clear preference for a title candidate. If so, please summarize your reasons for supporting Agent 1/Agent 2 and give the final title that you think is best, and the debate will conclude. If not, the debate will continue to the next round. Now please output your answer in json format, with the format as follows: {\"Whether there is a preference\": \"Yes or No\", \"Supported Side\": \"Agent 1 or Agent 2\", \"Reason\": \"\", \"debate_result\": \"\"}. Please strictly output in JSON format, do not output irrelevant content.",
+    "judge_prompt_last1": "Agent 1's title: ##title1##\n\nAgent 2's title: ##title2##\n\nNow, what title candidates do we have? Present them without reasons.",
+    "judge_prompt_last2": "Therefore, what is the best title for the following droodle: \"##droodle##\". Please summarize your reasons and give the final title that you think is best. Now please output your answer in json format, with the format as follows: {\"Reason\": \"\", \"debate_result\": \"\"}. Please strictly output in JSON format, do not output irrelevant content.",
+    "debate_prompt": "##oppo_title##\n\nDo you agree with my perspective? Please provide your reasons and title."
+}
