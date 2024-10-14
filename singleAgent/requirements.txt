@@ -3,3 +3,5 @@ python-dotenv
 tiktoken
 rich
 prompt_toolkit
+websockets
+asyncio
