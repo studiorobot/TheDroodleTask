@@ -1,9 +1,14 @@
 import os #Used to manipulate paths and pull files
+import sys #Uses to access modules
+
+sys.path.append(os.path.abspath('..')) #Needed to find modules
+os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) #Set the working directory to the parent directory
+
 from prompt_toolkit import prompt #Used to manage inputs from the user in the chat
 from dotenv import load_dotenv #used to load the .env file
 from rich import print #update the print function to include more colors
-from standardConversation import standardConversation #import standard conversation class
-from controlledConversation import controlledConversation #import the controlled conversation class
+from conversationManagement.standardConversation.standardConversation import standardConversation #import standard conversation class
+from conversationManagement.controlledConversation.controlledConversation import controlledConversation #import the controlled conversation class
 import json #used to encode and decode json messages
 from datetime import datetime #used to retrieve date and time for file name
 
@@ -41,13 +46,14 @@ else:
 def promptImage() -> str:
      while True:
         print("\n[red]System> Input image path[/red]")
+        print("[red]Current working directory: "+os.getcwd()+"[/red]")
         userInput = prompt("\nUser> ")
         if os.path.exists(userInput):
             return userInput
 
 #Continuously prompt the user to talk to the chatbot, relay and store the responses
+imagePath = "" #sets up image path variable
 while True:
-    imagePath = "" #sets up image path variable
     userInput = prompt("\nUser> ")
 
     #Catch any commands

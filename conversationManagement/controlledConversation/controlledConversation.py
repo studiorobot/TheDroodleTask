@@ -1,5 +1,5 @@
-from standardConversation import standardConversation #parent 
-from conversationTools import encodeMessage
+from ..standardConversation.standardConversation import standardConversation #parent 
+from ..conversationTools import encodeMessage
 
 class controlledConversation(standardConversation):
     def __init__(self, chatModel: str, controlModel: str, chatPrompts: list[str], controlPrompts: list[str], conversationName: str, savePath: str = "conversationArchive"):

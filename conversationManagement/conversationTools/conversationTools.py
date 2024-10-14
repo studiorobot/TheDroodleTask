@@ -12,3 +12,16 @@ def encodeMessage(textMessage: str, role: str, imagePath: str = ""):
 def decodeImage(imagePath: str) -> str:
     with open(imagePath, "rb") as file:
         return base64.b64encode(file.read()).decode('utf-8')
+
+#Encode a message used in internal conversation storage   
+def encodeMessageInternal(textMessage: str, timestamp: str, role: str, assistantType: str, sessionNumber: int = -1, image: str = "", note: str = "") -> dict:
+    Message = {
+    "content": textMessage,
+    "timestamp": timestamp,
+    "role": role,
+    "image_path": image,
+    "session_number": sessionNumber,
+    "assistant_type": assistantType,
+    "note": note
+    }
+    return Message
