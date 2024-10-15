@@ -111,11 +111,11 @@ class standardConversation:
             model = self._model
         
         print("\n\nrequest made using:" + str(tempConversation)+"\n\n") #delicious delicios debugging statement
-        # output = self._client.chat.completions.create(model = model, messages = tempConversation) #request completion
-        # return output.choices[0].message.content #return message content
+        output = self._client.chat.completions.create(model = model, messages = tempConversation) #request completion
+        return output.choices[0].message.content #return message content
         
         
-        return "omg wow the LLM talked" #yummy debug statement
+        # return "omg wow the LLM talked" #yummy debug statement
     
     #PRIVATE HELPER FUNCTIONS---------------------------------------------
         
