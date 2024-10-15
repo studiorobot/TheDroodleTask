@@ -22,16 +22,16 @@ class controlledConversation(standardConversation):
         
         tempConversation = self._prepPrompts(self._controlPrompts) + tempConversation
 
-        return self.makeRequest(tempConversation, self._controlModel)
+        return self._makeRequest(tempConversation, self._controlModel)
        
     def contConversation(self, newMessage: str, imagePath: str = "") -> str:
         self.insertMessage(newMessage, "user", imagePath) #Add new text and possible image message to history
 
         judgement = self.makeJudegement() #make a judgement based on the new human message
         print("\n\nJudgement> "+judgement)
-        self.insertMessage(judgement, "system", altRoleName="judgementSystemInsert") #insert the judgement as a system message
+        self.insertMessage(judgement, "system", note="Judgement System Insert") #insert the judgement as a system message
 
-        outputMessage = self.makeRequest() #Make request to regular chat model
+        outputMessage = self._makeRequest() #Make request to regular chat model
         self.insertMessage(outputMessage, "assistant") #Add assistant message to history
 
         return outputMessage

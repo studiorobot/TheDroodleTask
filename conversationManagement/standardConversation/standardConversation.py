@@ -60,7 +60,7 @@ class standardConversation:
     def contConversationDict(self, newMessage: dict) -> dict:
         self.insertMessageDict(newMessage) #Add new message
 
-        outputMessageText = self.makeRequest() #Make request to chat model
+        outputMessageText = self._makeRequest() #Make request to chat model
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S") #get timestamp
         sessionNumber = newMessage.get("session_number") #get session number
         assistantType = newMessage.get("assistant_type")
@@ -101,7 +101,11 @@ class standardConversation:
     def getPrompts(self) -> list[str]:
         return self._prompts
     
-    def makeRequest(self, tempConversation: list[dict] = None, model: str = None) -> str:
+    #PRIVATE HELPER FUNCTIONS---------------------------------------------
+
+    #Makes a request to the LLM using either the defualt conversation and model or given new conversation and model
+    #INPUT CONVERSATION IN CHATGPT FORM
+    def _makeRequest(self, tempConversation: list[dict] = None, model: str = None) -> str:
         #If conversation is allowed to default, use the conversation in the class instance and put the intial prompts at the start
         if tempConversation is None:
             tempConversation = self._prepPrompts() + self._conversation
@@ -113,11 +117,8 @@ class standardConversation:
         print("\n\nrequest made using:" + str(tempConversation)+"\n\n") #delicious delicios debugging statement
         output = self._client.chat.completions.create(model = model, messages = tempConversation) #request completion
         return output.choices[0].message.content #return message content
-        
-        
+
         # return "omg wow the LLM talked" #yummy debug statement
-    
-    #PRIVATE HELPER FUNCTIONS---------------------------------------------
         
     #Append message and potential image file to .txt file
     def _updateSave(self):
