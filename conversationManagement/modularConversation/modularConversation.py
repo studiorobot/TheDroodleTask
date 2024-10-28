@@ -1,5 +1,5 @@
 from ..standardConversation.standardConversation import standardConversation #parent 
-from ..conversationTools import encodeMessage #message encoder
+from ..conversationTools import encodeMessage, encodeMessageInternal #message encoder
 from enum import Enum
 
 class module(Enum):
@@ -71,7 +71,27 @@ class modularConversation(standardConversation):
             return False
         
         self._state = toModule
-        
+
+    #generates a list of all the possible next modules
+    def allPossibleStates(self) -> list[module]:
+        possibleModules = {}
+        for indevModule in module:
+            if self.checkSwitch(indevModule):
+                possibleModules.append(indevModule)
+        return possibleModules
+
+    #loop through all the possible next modules and generate quick possible messages using them   
+    def possibleNextMessages(self) -> list[dict]:
+        possibleMessages = {}
+        possibleModules = self.allPossibleStates()
+        for indevModule in possibleModules:
+            formattedPrompts = self._prepPrompts(self._constantPrompt+self._modulePrompts[indevModule.value])
+            conversation = formattedPrompts + self._conversation
+            message = self._makeRequest(tempConversation = conversation, model = "gpt-4o-mini")
+            encodedMessage = encodeMessageInternal(message, "", "assistant-theoretical", "LLM", note = indevModule.name)
+            possibleMessages.append(encodedMessage)
+        return possibleMessages
+
     #Add a new entry into the module history
     def addHistory(self, newModule: module, index: int):
         #if module not in history, add a new list
