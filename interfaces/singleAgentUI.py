@@ -4,7 +4,6 @@ import sys #Uses to access modules
 sys.path.append(os.path.abspath('..'))
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) #Set the working directory to the parent directory
 
-
 from prompt_toolkit import prompt #Used to manage inputs from the user in the chat
 from dotenv import load_dotenv #used to load the .env file
 from rich import print #update the print function to include more colors
@@ -16,18 +15,11 @@ import json #used to encode and decode json messages
 from datetime import datetime #used to retrieve date and time for file name
 
 load_dotenv() #load the .env file
-isExpert = os.getenv("IS_EXPERT").lower() in ('true', '1', 't')
-isControlled = os.getenv("IS_CONTROLLED").lower() in ('true', '1', 't')
 
-#Set prompt file names, selecting for expert or non-expert, based on env
-if isExpert:
-    promptFile = "prompts/promptExpert.txt"
-    conversationGuideFile = "prompts/conversationGuideExpert.txt"
-    print("[red]System> Booting Expert LLM[/red]")
-else:
-    promptFile = "prompts/prompt.txt"
-    conversationGuideFile = "prompts/conversationGuide.txt"
-    print("[red]System> Booting Non-Expert LLM[/red]")
+#Select the propt and conversationGuide Files
+promptFile = "prompts/promptExpert.txt"
+conversationGuideFile = "prompts/conversationGuideExpert.txt"
+print("[red]System> Booting Expert LLM[/red]")
 
 prompts = [] #init prompt file
 
@@ -37,13 +29,8 @@ with open(promptFile, "r") as file:
 with open(conversationGuideFile, "r") as file:
     prompts.append(file.read())
 
-if not isControlled:
-    conv = standardConversation("gpt-4o", prompts, "singleAgent") #create a conversation instance
-else:
-    controllPrompts = []
-    with open("prompts/controllerPrompt.txt") as file:
-        controllPrompts.append(file.read())
-    conv = controlledConversation("gpt-4o", "gpt-4o", prompts, controllPrompts,"singleAgent")
+#Init the conversation variable
+conv = standardConversation("gpt-4o", prompts, "singleAgent") #create a conversation instance
 
 #prompt the user to input an image path and return the path string. If image path does not exist, prompt again
 def promptImage() -> str:
