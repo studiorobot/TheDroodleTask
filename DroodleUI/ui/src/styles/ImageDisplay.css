@@ -1,34 +1,32 @@
-/* Container that holds the image */
 .image-container {
   position: relative;
   width: 100%;
-  height: 100%; /* Full height of the parent container */
+  height: 100%;
   background-color: #111113;
   border: 1px solid #ccc;
   overflow: hidden;
   user-select: none; /* Prevents text/image selection */
 }
 
-/* Draggable and resizable image styles */
-.draggable {
+.draggable img {
   max-width: 100%;
   max-height: 100%;
-  object-fit: contain; /* Ensures the image maintains its aspect ratio */
-  cursor: move; /* Indicates that the image can be moved */
-  user-drag: none; /* Disables the native browser drag behavior */
+  object-fit: contain;
+  user-drag: none;
 }
 
-/* Controls for rotation */
-.controls {
+.rotate-icon {
+  font-size: 18px;
+  color: #333;
   position: absolute;
-  bottom: 10px;  /* Position at the bottom of the parent container */
-  left: 50%;
-  transform: translateX(-50%);  /* Center the controls horizontally */
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  top: -10px;
+  left: -10px;
 }
 
-.controls label {
-  margin-right: 10px;  /* Spacing between the label and the slider */
+.rotate-corner {
+  transition: opacity 0.2s ease-in-out;  /* Smooth fade for showing/hiding the rotation icon */
+}
+
+.rotate-corner:hover {
+  opacity: 1;
 }
