@@ -59,11 +59,18 @@ class standardConversation:
     #Main function for continuing the conversation using a message dict object
     def contConversationDict(self, newMessage: dict) -> dict:
         self.insertMessageDict(newMessage) #Add new message
+        outMessage = self.turnoverConversationDict()
+        return outMessage
+    
+    #Get a response from the LLM and store it without a human input
+    def turnoverConversationDict(self) -> dict:
+        #Get the last message from storage
+        lastMessage = self._conversationInternal[-1]
 
         outputMessageText = self._makeRequest() #Make request to chat model
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S") #get timestamp
-        sessionNumber = newMessage.get("session_number") #get session number
-        assistantType = newMessage.get("assistant_type")
+        sessionNumber = lastMessage.get("session_number") #get session number
+        assistantType = lastMessage.get("assistant_type")
         outputMessage = encodeMessageInternal(outputMessageText, timestamp, "assistant", assistantType, sessionNumber = sessionNumber) #package message
 
         self.insertMessageDict(outputMessage)

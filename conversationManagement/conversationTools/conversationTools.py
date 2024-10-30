@@ -25,3 +25,17 @@ def encodeMessageInternal(textMessage: str, timestamp: str, role: str, assistant
     "note": note
     }
     return Message
+
+#Method that splits a text file into a string array, splitting by some marker (removs the marker)
+def splitFileByMarker(filename: str, marker: str) -> list[str]:
+    # Read the entire file content
+    with open(filename, 'r') as file:
+        content = file.read()
+    
+    # Split the content by the marker
+    split_content = content.split(marker)
+    
+    # Add the marker back to each entry and remove any empty entries
+    split_content = [entry.strip() for entry in split_content if entry.strip()]
+    
+    return split_content

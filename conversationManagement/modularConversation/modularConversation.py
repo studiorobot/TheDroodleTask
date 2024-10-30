@@ -3,17 +3,16 @@ from ..conversationTools import encodeMessage, encodeMessageInternal #message en
 from enum import Enum
 
 class module(Enum):
-    PASSIVE = 0
-    PLAY  = 1
-    TARGETED_OBSERVATION = 2
-    STIMULATION = 3
-    REFORMING = 4
-    GROUNDING = 5
-    CAPTIONING = 6
-    REFINING = 7
-    FEEDBACK = 8
-    SELF_EVALUATION = 9
-    AIDING = 10
+    PLAY  = 0
+    TARGETED_OBSERVATION = 1
+    STIMULATION = 2
+    REFORMING = 3
+    GROUNDING = 4
+    CAPTIONING = 5
+    REFINING = 6
+    FEEDBACK = 7
+    SELF_EVALUATION = 8
+    AIDING = 9
 
     #Functions that check the attributes of each state
     def isDivergent(self) -> bool:
@@ -27,7 +26,7 @@ class module(Enum):
     
     #Get the list of neccessary before states to get to this module
     def prerequisites(self) -> list['module']:
-        if (self == module.PLAY) or (self == module.TARGETED_OBSERVATION) or (self == module.AIDING) or (self == module.PASSIVE):
+        if (self == module.PLAY) or (self == module.TARGETED_OBSERVATION) or (self == module.AIDING):
             return list(module.__members__.values()) #list of all possible enums
         elif self == module.STIMULATION:
             return {module.STIMULATION, module.TARGETED_OBSERVATION}
@@ -52,8 +51,9 @@ class modularConversation(standardConversation):
         
         self._constantPrompt = constantPrompt #prompts that hold true always
         self._modulePrompts = modulePrompts #prompts that switch out
-        self._state = module(0) #the mode the chatbot is in, starts in the passive mode
+        self._state = module(0) #the mode the chatbot is in, starts in the play mode
         self._history = dict() #history of the used modules, used to limit possible steps
+        self.addHistory(module(0), 0)
 
     #Check if switching into the proposed module is possible
     def checkSwitch(self, toModule: module) -> bool:
@@ -74,7 +74,7 @@ class modularConversation(standardConversation):
 
     #generates a list of all the possible next modules
     def allPossibleStates(self) -> list[module]:
-        possibleModules = {}
+        possibleModules = []
         for indevModule in module:
             if self.checkSwitch(indevModule):
                 possibleModules.append(indevModule)
@@ -82,10 +82,10 @@ class modularConversation(standardConversation):
 
     #loop through all the possible next modules and generate quick possible messages using them   
     def possibleNextMessages(self) -> list[dict]:
-        possibleMessages = {}
+        possibleMessages = []
         possibleModules = self.allPossibleStates()
         for indevModule in possibleModules:
-            formattedPrompts = self._prepPrompts(self._constantPrompt+self._modulePrompts[indevModule.value])
+            formattedPrompts = self._prepPrompts(self._constantPrompt+[self._modulePrompts[indevModule.value]])
             conversation = formattedPrompts + self._conversation
             message = self._makeRequest(tempConversation = conversation, model = "gpt-4o-mini")
             encodedMessage = encodeMessageInternal(message, "", "assistant-theoretical", "LLM", note = indevModule.name)
@@ -96,9 +96,9 @@ class modularConversation(standardConversation):
     def addHistory(self, newModule: module, index: int):
         #if module not in history, add a new list
         if self._history.get(newModule, False) == False:
-            self._history[module] = {index}
+            self._history[newModule] = [index]
         else: #if module is in history, add new entry to list
-            self._history[module].append(index)
+            self._history[newModule].append(index)
 
     #get the state of the chatbot
     def getState(self) -> module:
@@ -113,5 +113,5 @@ class modularConversation(standardConversation):
     def _prepPrompts(self, prompts: list[str] = None) -> list[dict]:
         #if not overridden by entry value, assemble appropriate modular and constant prompts into list
         if prompts is None:
-            prompts = self._constantPrompt + self._modulePrompts[self._state.value]
+            prompts = self._constantPrompt + [self._modulePrompts[self._state.value]]
         return super()._prepPrompts(prompts) #make super do the rest

@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Debugger: elizaTERMINAL",
+            "name": "Python Debugger: modularConvTERMINAL",
             "type": "debugpy",
             "request": "launch",
-            "program": "${cwd}/interfaces/elizaUI.py",
+            "program": "${cwd}/interfaces/modularConvTERMINAL.py",
             "console": "integratedTerminal",
             "cwd": "/home/yert1/robotStudio/TheDroodleTask",
             "env": {
