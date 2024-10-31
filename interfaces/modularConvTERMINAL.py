@@ -7,7 +7,8 @@ os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) #Set the w
 from prompt_toolkit import prompt #Used to manage inputs from the user in the chat
 from dotenv import load_dotenv #used to load the .env file
 from rich import print #update the print function to include more colors
-from conversationManagement.modularConversation.modularConversation import modularConversation, module #import standard conversation class
+from conversationManagement.modularConversation.modularConversation import modularConversation, module #import conversation class
+from conversationManagement.modularConversation.controlledModularConversation import multiControlledModularConversation
 from conversationManagement.conversationTools.conversationTools import splitFileByMarker
 from datetime import datetime #used to retrieve date and time for file name
 
@@ -17,15 +18,23 @@ load_dotenv() #load the .env file
 conversationGuideFile = "prompts/conversationGuideExpert.txt"
 
 #The below lines extract the prompt info from files and store them in the prompt list
-constantPrompt = [] #init constant prompt file
+constantPrompt = [] #init constant prompt
 with open("prompts/modularPrompt.txt", "r") as file:
     constantPrompt.append(file.read())
     
 modularPrompt = splitFileByMarker("prompts/modularConversationGuide.txt", "###")
 
-#Init the conversation variable
-conv = modularConversation("gpt-4o", constantPrompt, modularPrompt, "modularConv") #create a conversation instance
+controlPrompts = [] #init control prompts
+with open("prompts/modularControllerPrompt.txt", "r") as file:
+    controlPrompts.append(file.read())
+with open("prompts/modularControllerExtrapPrompt.txt", "r") as file:
+    controlPrompts.append(file.read())
 
+#control types
+controlTypes = ["no extrapolation", "extrapolation"]
+
+#Init the conversation variable
+conv = multiControlledModularConversation("gpt-4o", constantPrompt, modularPrompt, controlPrompts, controlTypes, "modularConv")
 
 #prompt the user to input an image path and return the path string. If image path does not exist, prompt again
 def promptImage() -> str:
@@ -86,6 +95,14 @@ while True:
         possibleMessage = possibleMessages[i]
         indevModule = possibleModules[i]
         print("[pink]Assistant - " + indevModule.name + "(" + str(indevModule.value) + ")> "+possibleMessage.get("content")+"[/pink]")
+    
+    print("\n")
+    
+    #Get controller responses
+    controllerResponses = conv.decideAllSwitch()
+
+    for i in range(len(controllerResponses)):
+        print("[pink]" + controlTypes[i] + ": " + str(controllerResponses[i]) + "[/pink]")
 
     #Ask for module selection
     print("\n[red]System> Select a Module (a number 0 - 9)[/red]")
