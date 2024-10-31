@@ -1,0 +1,4 @@
+user> hello
+assistant (PLAY)> Hello! How's your day going so far?
+user> cool
+assistant (PLAY)> That's great to hear! What's something fun or interesting you've been up to recently?

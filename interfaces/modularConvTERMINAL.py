@@ -18,7 +18,7 @@ conversationGuideFile = "prompts/conversationGuideExpert.txt"
 
 #The below lines extract the prompt info from files and store them in the prompt list
 constantPrompt = [] #init constant prompt file
-with open("prompts/promptExpert.txt", "r") as file:
+with open("prompts/modularPrompt.txt", "r") as file:
     constantPrompt.append(file.read())
     
 modularPrompt = splitFileByMarker("prompts/modularConversationGuide.txt", "###")
@@ -60,6 +60,11 @@ while True:
             print("\n[red]System> Input system message[/red]")
             insert = prompt("\nUser> ")
             conv.insertMessage(insert, "system", altRoleName="systemInsert")
+        #Test command, a placeholder for whatever I want 
+        elif userInput[1:] == "test":
+            with open("test.txt", "w") as file:
+                file.write(conv.getConversationStr())
+            print("\n[red]System> Made a test text file :)[/red]")
         #Command not recognized
         else:
             print("\n[red]System> Command Not Recognized[/red]")

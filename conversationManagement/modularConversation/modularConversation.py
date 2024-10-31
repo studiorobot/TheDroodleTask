@@ -105,8 +105,10 @@ class modularConversation(standardConversation):
         return self._state
     
     #Adding history management into the insertMessage method
-    def insertMessage(self, newMessage: str, role: str, imagePath: str = "", note: str = ""):
-        super().insertMessage(newMessage, role, imagePath, note) #insert the message like normal
+    def insertMessageDict(self, newMessage: dict):
+        if newMessage.get("role") == "assistant":
+            newMessage["note"] = self._state.name
+        super().insertMessageDict(newMessage)
         self.addHistory(self._state, len(self._conversationInternal)) #add the history in
 
     #Prep the propmts for completion

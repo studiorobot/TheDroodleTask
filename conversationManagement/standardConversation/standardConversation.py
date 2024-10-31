@@ -104,6 +104,17 @@ class standardConversation:
     #PUBLIC ACCESSOR FUNCTIONS--------------------------------------------
     def getConversation(self) -> list[dict]:
         return self._conversationInternal
+    
+    #Get the conversation history as a single string
+    def getConversationStr(self) -> str:
+        output = ""
+        for message in self._conversationInternal:
+            output = output + message.get("role")
+            if message.get("note") != "":
+                output = output + " (" + message.get("note") + ")"
+            output = output + "> "
+            output = output + message.get("content") + "\n"
+        return output
 
     def getPrompts(self) -> list[str]:
         return self._prompts
