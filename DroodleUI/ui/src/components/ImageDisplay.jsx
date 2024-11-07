@@ -1,12 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { Rnd } from 'react-rnd';  // Import react-rnd for drag/resize
 import '../styles/ImageDisplay.css';
-import abstractImage1 from '../assets/abstract1.jpg';  // First image
-import abstractImage2 from '../assets/abstract2.jpg';  // Second image
-import abstractImage3 from '../assets/abstract3.jpg';  // Third image
-import abstractImage4 from '../assets/abstract4.jpg';  // Fourth image
+import abstractImage1 from '/Users/funckley/Documents/GitHub/TheDroodleTask/droodleExamples/droodleExample.jpg';  // First image
+import abstractImage2 from '/Users/funckley/Documents/GitHub/TheDroodleTask/droodleExamples/droodleExample2.jpg';  // Second image
+import abstractImage3 from '/Users/funckley/Documents/GitHub/TheDroodleTask/droodleExamples/droodleExample3.jpg';  // Third image
+import abstractImage4 from '/Users/funckley/Documents/GitHub/TheDroodleTask/droodleExamples/droodleExample4.jpg';  // Fourth image
 
-function ImageDisplay() {
+function ImageDisplay({ currentImageIndex, setCurrentImageIndex, onImageSwitch }) {
   const images = [abstractImage1, abstractImage2, abstractImage3, abstractImage4]; // Array of images
 
   // State to store the rotation, position, and size of each image
@@ -18,7 +18,6 @@ function ImageDisplay() {
     }));
   });
 
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);  // State to track current image index
   const [isHoveringCorner, setIsHoveringCorner] = useState(false);  // State for showing rotation icon
   const [isRotating, setIsRotating] = useState(false);  // State to track if the image is being rotated
   const rndRef = useRef(null);  // Reference to Rnd component
@@ -80,16 +79,16 @@ function ImageDisplay() {
 
   // Navigate to the next image
   const handleNextImage = () => {
-    if (currentImageIndex < images.length - 1) { // Prevent going past the last image
-      setCurrentImageIndex(currentImageIndex + 1);
-    }
+    const nextIndex = (currentImageIndex + 1) % images.length; // Loop back to first image if at the end
+    setCurrentImageIndex(nextIndex);
+    onImageSwitch(nextIndex);  // Notify parent about the image switch
   };
 
   // Navigate to the previous image
   const handlePreviousImage = () => {
-    if (currentImageIndex > 0) { // Prevent going before the first image
-      setCurrentImageIndex(currentImageIndex - 1);
-    }
+    const prevIndex = (currentImageIndex - 1 + images.length) % images.length; // Loop back to last image if at the beginning
+    setCurrentImageIndex(prevIndex);
+    onImageSwitch(prevIndex);  // Notify parent about the image switch
   };
 
   const currentImageState = imageStates[currentImageIndex];  // Get the state for the current image

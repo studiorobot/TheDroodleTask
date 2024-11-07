@@ -70,11 +70,30 @@ async def handler(websocket, path):
             message = await websocket.recv()
             data = json.loads(message)
             userInput = data.get("message", "")
+            command = data.get("command", "")  # New field for specific commands like "save_and_reset"
             
             # Automatically set `imagePath` based on `current_image`
             imagePath = current_image  # Always use the current image
 
-            # Handle commands
+            # Handle the "save_and_reset" command from the frontend
+            if command == "save_and_reset":
+                # Save the current conversation
+                current_conversation.makeConversationSave()
+                print(f"\n[red]System> Conversation for {current_image} saved.[/red]")
+
+                # Update to the next image and corresponding conversation
+                current_image_index = (current_image_index + 1) % len(images)  # Cycle to the next image
+                current_image = images[current_image_index]
+                current_conversation = conversations[os.path.basename(current_image)]
+
+                # Notify the frontend about the image switch and reset
+                await websocket.send(json.dumps({
+                    "status": "conversation_reset",
+                    "image": current_image
+                }))
+                continue
+
+            # Handle commands if the userInput starts with a "/"
             if userInput.startswith("/"):
                 if userInput[1:] == "exit":
                     print("\n[red]System> Exiting chat[/red]")
@@ -98,7 +117,7 @@ async def handler(websocket, path):
                     break
 
                 elif userInput.startswith("/switch_image"):
-                    # Switch to a new image conversation when the command is received
+                    # Manually switch to a new image conversation if requested
                     current_image_index = data["switch_image"]
                     current_image = images[current_image_index]
                     current_conversation = conversations[os.path.basename(current_image)]
@@ -120,7 +139,7 @@ async def handler(websocket, path):
                     await websocket.send(json.dumps(response))
                     continue
 
-            # Process the conversation, using imagePath automatically
+            # Process the conversation using the automatically set imagePath
             output = current_conversation.contConversation(userInput, imagePath)
 
             # Create a response with metadata (index, role, timestamp)

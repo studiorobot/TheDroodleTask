@@ -8,28 +8,6 @@ function ChatWindow({ currentImageIndex }) {  // Pass the current image index as
   const lastMessageRef = useRef(null);  // Ref to track the last message for auto-scroll
 
   // Set up WebSocket connection when component mounts
-  // useEffect(() => {
-  //   websocket.current = new WebSocket('ws://localhost:8765');
-
-  //   // Handle incoming messages from WebSocket
-  //   websocket.current.onmessage = (event) => {
-  //     const data = JSON.parse(event.data);
-  //     const assistantMessage = { sender: data.role, text: data.message };
-  //     setChatHistories((prevHistories) => ({
-  //       ...prevHistories,
-  //       [currentImageIndex]: [...(prevHistories[currentImageIndex] || []), assistantMessage],
-  //     }));
-  //   };
-
-  //   // Cleanup WebSocket when component unmounts
-  //   return () => {
-  //     if (websocket.current) {
-  //       websocket.current.close();
-  //     }
-  //   };
-  // }, [currentImageIndex]);  // Re-run when image index changes
-
-  // Set up WebSocket connection when component mounts
   useEffect(() => {
     websocket.current = new WebSocket('ws://localhost:8765');
 
@@ -37,13 +15,13 @@ function ChatWindow({ currentImageIndex }) {  // Pass the current image index as
     websocket.current.onmessage = (event) => {
       const data = JSON.parse(event.data);
 
-      if (data.status === "image_switched") {
+      if (data.status === "conversation_reset") {
         // Reset chat history for the new image
         setChatHistories((prevHistories) => ({
           ...prevHistories,
-          [currentImageIndex]: []
+          [currentImageIndex]: []  // Clear chat history for the current image
         }));
-      } else {
+      } else if (data.message) {
         // Append received message to the current chat history
         const assistantMessage = { sender: data.role, text: data.message };
         setChatHistories((prevHistories) => ({
@@ -70,13 +48,6 @@ function ChatWindow({ currentImageIndex }) {  // Pass the current image index as
       lastMessageRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [currentChatHistory]);
-
-  // Send switch_image request when the current image index changes
-  // useEffect(() => {
-  //   if (websocket.current) {
-  //     websocket.current.send(JSON.stringify({ switch_image: currentImageIndex }));
-  //   }
-  // }, [currentImageIndex]);
 
   // Handle sending messages to the WebSocket server
   const handleSend = (e) => {
