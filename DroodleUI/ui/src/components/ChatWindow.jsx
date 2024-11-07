@@ -1,85 +1,3 @@
-// import React, { useState, useEffect, useRef } from 'react';
-// import '../styles/ChatWindow.css';
-
-// function ChatWindow() {
-//   const [messages, setMessages] = useState([
-//     { sender: 'assistant', text: 'Hello! Need help with captions?' },
-//   ]);
-//   const [input, setInput] = useState('');
-//   const websocket = useRef(null); // Ref to store WebSocket instance
-//   const lastMessageRef = useRef(null); // Ref to track the last message for auto-scroll
-
-//   // Set up WebSocket connection when component mounts
-//   useEffect(() => {
-//     // Initialize WebSocket connection
-//     websocket.current = new WebSocket('ws://localhost:8765');
-
-//     // Handle incoming messages from WebSocket
-//     websocket.current.onmessage = (event) => {
-//       const data = JSON.parse(event.data);
-//       const assistantMessage = { sender: data.role, text: data.message };
-//       setMessages((prevMessages) => [...prevMessages, assistantMessage]);
-//     };
-
-//     // Cleanup WebSocket when component unmounts
-//     return () => {
-//       if (websocket.current) {
-//         websocket.current.close();
-//       }
-//     };
-//   }, []);
-
-//   // Scroll to the last message whenever messages update
-//   useEffect(() => {
-//     if (lastMessageRef.current) {
-//       lastMessageRef.current.scrollIntoView({ behavior: 'smooth' });
-//     }
-//   }, [messages]);
-
-//   // Handle sending messages to the WebSocket server
-//   const handleSend = (e) => {
-//     e.preventDefault();
-//     if (input.trim() !== '') {
-//       const userMessage = { sender: 'user', text: input };
-//       setMessages((prevMessages) => [...prevMessages, userMessage]);
-
-//       // Send the user's message to the WebSocket server
-//       if (websocket.current) {
-//         websocket.current.send(JSON.stringify({ message: input }));
-//       }
-
-//       setInput('');
-//     }
-//   };
-
-//   return (
-//     <div className="chat-window">
-//       <div className="chat-history">
-//         {messages.map((msg, idx) => (
-//           <div key={idx} className={`chat-message ${msg.sender}`}>
-//             <span>{msg.text}</span>
-//           </div>
-//         ))}
-//         {/* Dummy div to act as the scroll target */}
-//         <div ref={lastMessageRef} />
-//       </div>
-//       <form className="chat-input" onSubmit={handleSend}>
-//         <input
-//           type="text"
-//           placeholder="Type your message..."
-//           value={input}
-//           onChange={(e) => setInput(e.target.value)}
-//         />
-//         <button type="submit">Send</button>
-//       </form>
-//     </div>
-//   );
-// }
-
-// export default ChatWindow;
-
-////////////////////////////////////////////////////////////////////////////
-
 import React, { useState, useEffect, useRef } from 'react';
 import '../styles/ChatWindow.css';
 
@@ -90,20 +8,49 @@ function ChatWindow({ currentImageIndex }) {  // Pass the current image index as
   const lastMessageRef = useRef(null);  // Ref to track the last message for auto-scroll
 
   // Set up WebSocket connection when component mounts
+  // useEffect(() => {
+  //   websocket.current = new WebSocket('ws://localhost:8765');
+
+  //   // Handle incoming messages from WebSocket
+  //   websocket.current.onmessage = (event) => {
+  //     const data = JSON.parse(event.data);
+  //     const assistantMessage = { sender: data.role, text: data.message };
+  //     setChatHistories((prevHistories) => ({
+  //       ...prevHistories,
+  //       [currentImageIndex]: [...(prevHistories[currentImageIndex] || []), assistantMessage],
+  //     }));
+  //   };
+
+  //   // Cleanup WebSocket when component unmounts
+  //   return () => {
+  //     if (websocket.current) {
+  //       websocket.current.close();
+  //     }
+  //   };
+  // }, [currentImageIndex]);  // Re-run when image index changes
+
+  // Set up WebSocket connection when component mounts
   useEffect(() => {
     websocket.current = new WebSocket('ws://localhost:8765');
-    // websocket.current = new WebSocket('wss://055556847422.ngrok.app');  // Use the correct Ngrok WebSocket URL
-    // websocket.current = new WebSocket('ws://localhost:5173/ws');
-    // websocket.current = new WebSocket('wss://54ffabb4f110.ngrok.app'); // 8765
 
     // Handle incoming messages from WebSocket
     websocket.current.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      const assistantMessage = { sender: data.role, text: data.message };
-      setChatHistories((prevHistories) => ({
-        ...prevHistories,
-        [currentImageIndex]: [...(prevHistories[currentImageIndex] || []), assistantMessage],
-      }));
+
+      if (data.status === "image_switched") {
+        // Reset chat history for the new image
+        setChatHistories((prevHistories) => ({
+          ...prevHistories,
+          [currentImageIndex]: []
+        }));
+      } else {
+        // Append received message to the current chat history
+        const assistantMessage = { sender: data.role, text: data.message };
+        setChatHistories((prevHistories) => ({
+          ...prevHistories,
+          [currentImageIndex]: [...(prevHistories[currentImageIndex] || []), assistantMessage],
+        }));
+      }
     };
 
     // Cleanup WebSocket when component unmounts
@@ -123,6 +70,13 @@ function ChatWindow({ currentImageIndex }) {  // Pass the current image index as
       lastMessageRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [currentChatHistory]);
+
+  // Send switch_image request when the current image index changes
+  // useEffect(() => {
+  //   if (websocket.current) {
+  //     websocket.current.send(JSON.stringify({ switch_image: currentImageIndex }));
+  //   }
+  // }, [currentImageIndex]);
 
   // Handle sending messages to the WebSocket server
   const handleSend = (e) => {

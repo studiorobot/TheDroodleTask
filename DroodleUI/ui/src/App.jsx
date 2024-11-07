@@ -36,19 +36,49 @@
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-import React from 'react';
+// import React from 'react';
+// import ChatWindow from './components/ChatWindow';
+// import ImageDisplay from './components/ImageDisplay';
+// import './styles/App.css';
+
+// function App() {
+//   return (
+//     <div className="app-container">
+//       <div className="left-pane">
+//         <ChatWindow />
+//       </div>
+//       <div className="right-pane">
+//         <ImageDisplay />
+//       </div>
+//     </div>
+//   );
+// }
+
+// export default App;
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+import React, { useState } from 'react';
 import ChatWindow from './components/ChatWindow';
 import ImageDisplay from './components/ImageDisplay';
 import './styles/App.css';
 
 function App() {
+  // State to track the current image index
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
   return (
     <div className="app-container">
       <div className="left-pane">
-        <ChatWindow />
+        {/* Pass currentImageIndex to ChatWindow */}
+        <ChatWindow currentImageIndex={currentImageIndex} />
       </div>
       <div className="right-pane">
-        <ImageDisplay />
+        {/* Pass currentImageIndex and setCurrentImageIndex to ImageDisplay */}
+        <ImageDisplay 
+          currentImageIndex={currentImageIndex} 
+          setCurrentImageIndex={setCurrentImageIndex} 
+        />
       </div>
     </div>
   );

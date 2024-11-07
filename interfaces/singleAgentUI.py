@@ -14,6 +14,16 @@ import websockets #used to create a websocket connection
 import json #used to encode and decode json messages
 from datetime import datetime #used to retrieve date and time for file name
 
+
+# Define the specific images you want to use from the directory
+images = ["/Users/funckley/Documents/GitHub/TheDroodleTask/droodleExamples/droodleExample.jpg", "/Users/funckley/Documents/GitHub/TheDroodleTask/droodleExamples/droodleExample2.jpg", "/Users/funckley/Documents/GitHub/TheDroodleTask/droodleExamples/droodleExample3.jpg", "/Users/funckley/Documents/GitHub/TheDroodleTask/droodleExamples/droodleExample4.jpg"]
+
+for img in images:
+    if not os.path.isfile(img):
+        print(f"File not found: {img}")
+    else:
+        print(f"File found: {img}")
+
 load_dotenv() #load the .env file
 
 #Select the propt and conversationGuide Files
@@ -29,28 +39,40 @@ with open(promptFile, "r") as file:
 with open(conversationGuideFile, "r") as file:
     prompts.append(file.read())
 
-#Init the conversation variable
-conv = standardConversation("gpt-4o", prompts, "singleAgent") #create a conversation instance
 
-#prompt the user to input an image path and return the path string. If image path does not exist, prompt again
-def promptImage() -> str:
-     while True:
-        print("\n[red]System> Input image path[/red]")
-        userInput = prompt("\nUser> ")
-        if os.path.exists(userInput):
-            return userInput
+# Initialize a conversation instance for each selected image
+conversations = {}
+for image_path in images:
+    prompts = []  # Load or set up prompts as needed
+    with open("prompts/promptExpert.txt", "r") as file:
+        prompts.append(file.read())
+    with open("prompts/conversationGuideExpert.txt", "r") as file:
+        prompts.append(file.read())
+    
+    # Use only the filename as the identifier for each conversation
+    image_name = os.path.basename(image_path)  # Extract the filename from the path
+    conversations[image_name] = standardConversation("gpt-4o", prompts, image_name)
 
-# WebSocket handler
+# Global variables to keep track of the current image and conversation instance
+current_image_index = 0
+current_image = images[current_image_index]
+# image_path = os.path.join(IMAGE_DIRECTORY, current_image)
+image_path = current_image
+# current_conversation = conversations[current_image]
+current_conversation = conversations[os.path.basename(current_image)]
+
 async def handler(websocket, path):
-    imagePath = ""  # Set up image path variable
-
+    global current_image_index, current_image, current_conversation
+    
     while True:
         try:
             # Receive message from the frontend via WebSocket
-            message = await websocket.recv()  # Get user input from React
+            message = await websocket.recv()
             data = json.loads(message)
             userInput = data.get("message", "")
-            imagePath = data.get("imagePath", "")
+            
+            # Automatically set `imagePath` based on `current_image`
+            imagePath = current_image  # Always use the current image
 
             # Handle commands
             if userInput.startswith("/"):
@@ -64,11 +86,8 @@ async def handler(websocket, path):
                     await websocket.send(json.dumps(response))
                     break
 
-                elif userInput[1:] == "insertImage":
-                    imagePath = await promptImage(websocket)
-
                 elif userInput[1:] == "save":
-                    conv.makeConversationSave()
+                    current_conversation.makeConversationSave()
                     print("\n[red]System> Saving and exiting chat[/red]")
                     response = {
                         "role": "system",
@@ -78,15 +97,18 @@ async def handler(websocket, path):
                     await websocket.send(json.dumps(response))
                     break
 
-                elif userInput[1:] == "insertSystem":
-                    response = {
-                        "role": "system",
-                        "message": "Insert system message",
-                        "timestamp": str(datetime.now())
-                    }
-                    await websocket.send(json.dumps(response))
-                    insert = await websocket.recv()  # Receive the system message
-                    conv.insertMessage(insert, "system", altRoleName="systemInsert")
+                elif userInput.startswith("/switch_image"):
+                    # Switch to a new image conversation when the command is received
+                    current_image_index = data["switch_image"]
+                    current_image = images[current_image_index]
+                    current_conversation = conversations[os.path.basename(current_image)]
+                    imagePath = current_image  # Update imagePath to the new current image
+                    
+                    # Notify the frontend about the image switch
+                    await websocket.send(json.dumps({
+                        "status": "image_switched",
+                        "image": current_image
+                    }))
                     continue
 
                 else:
@@ -98,16 +120,12 @@ async def handler(websocket, path):
                     await websocket.send(json.dumps(response))
                     continue
 
-            # Handle the conversation flow
-            if len(imagePath) != 0:
-                output = conv.contConversation(userInput, imagePath)
-                imagePath = ""
-            else:
-                output = conv.contConversation(userInput)
+            # Process the conversation, using imagePath automatically
+            output = current_conversation.contConversation(userInput, imagePath)
 
-            # Create response with metadata (index, role, timestamp)
+            # Create a response with metadata (index, role, timestamp)
             response = {
-                "index": 0,  # Adjust index if needed
+                "index": current_image_index,  # Index of the current image
                 "role": "assistant",
                 "message": output,
                 "timestamp": str(datetime.now())
@@ -118,21 +136,6 @@ async def handler(websocket, path):
 
         except websockets.ConnectionClosed:
             break
-
-
-# Prompt for image path via WebSocket
-async def promptImage(websocket) -> str:
-    while True:
-        response = {
-            "role": "system",
-            "message": "Input image path",
-            "timestamp": str(datetime.now())
-        }
-        await websocket.send(json.dumps(response))  # Ask the frontend to send an image path
-        userInput = await websocket.recv()  # Get image path from React
-        if os.path.exists(userInput):
-            return userInput
-
 
 # Start the WebSocket server
 async def main():
