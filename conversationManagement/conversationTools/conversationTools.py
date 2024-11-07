@@ -39,3 +39,15 @@ def splitFileByMarker(filename: str, marker: str) -> list[str]:
     split_content = [entry.strip() for entry in split_content if entry.strip()]
     
     return split_content
+
+#Method that removes any images from a conversation formatted with the openAI format
+def removeImgInConv(conversation: list[dict]) -> list[dict]:
+    new_conversation = []
+    for message in conversation:
+        if "image_url" in message.get("content", {}):
+            new_message = message.copy()
+            new_message["content"] = {key: value for key, value in message["content"].items() if key != "image_url"}
+            new_conversation.append(new_message)
+        else:
+            new_conversation.append(message)
+    return new_conversation

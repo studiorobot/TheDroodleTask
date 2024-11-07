@@ -1,5 +1,5 @@
 from ..standardConversation.standardConversation import standardConversation #parent 
-from ..conversationTools import encodeMessage, encodeMessageInternal #message encoder
+from ..conversationTools.conversationTools import encodeMessage, encodeMessageInternal, removeImgInConv #message encoder
 from enum import Enum
 
 class module(Enum):
@@ -86,7 +86,7 @@ class modularConversation(standardConversation):
         possibleModules = self.allPossibleStates()
         for indevModule in possibleModules:
             formattedPrompts = self._prepPrompts(self._constantPrompt+[self._modulePrompts[indevModule.value]])
-            conversation = formattedPrompts + self._conversation
+            conversation = formattedPrompts + removeImgInConv(self._conversation)
             message = self._makeRequest(tempConversation = conversation, model = "gpt-4o-mini")
             encodedMessage = encodeMessageInternal(message, "", "assistant-theoretical", "LLM", note = indevModule.name)
             possibleMessages.append(encodedMessage)
