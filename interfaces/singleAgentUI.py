@@ -8,7 +8,8 @@ from prompt_toolkit import prompt #Used to manage inputs from the user in the ch
 from dotenv import load_dotenv #used to load the .env file
 from rich import print #update the print function to include more colors
 from conversationManagement.standardConversation.standardConversation import standardConversation #import standard conversation class
-from conversationManagement.controlledConversation.controlledConversation import controlledConversation #import the controlled conversation class
+from conversationManagement.modularConversation.controlledModularConversation import controlledModularConversation #import controlled modular conversation class
+from conversationManagement.conversationTools.conversationTools import splitFileByMarker #import file splitter
 import asyncio #used to run async functions
 import websockets #used to create a websocket connection
 import json #used to encode and decode json messages
@@ -16,7 +17,7 @@ from datetime import datetime #used to retrieve date and time for file name
 
 
 # Define the specific images you want to use from the directory
-images = ["/Users/funckley/Documents/GitHub/TheDroodleTask/droodleExamples/droodleExample.jpg", "/Users/funckley/Documents/GitHub/TheDroodleTask/droodleExamples/droodleExample2.jpg", "/Users/funckley/Documents/GitHub/TheDroodleTask/droodleExamples/droodleExample3.jpg", "/Users/funckley/Documents/GitHub/TheDroodleTask/droodleExamples/droodleExample4.jpg"]
+images = ["droodleExamples/droodleExample.jpg", "droodleExamples/droodleExample2.jpg", "droodleExamples/droodleExample3.jpg", "droodleExamples/droodleExample4.jpg"]
 
 for img in images:
     if not os.path.isfile(img):
@@ -26,32 +27,22 @@ for img in images:
 
 load_dotenv() #load the .env file
 
-#Select the propt and conversationGuide Files
-promptFile = "prompts/promptExpert.txt"
-conversationGuideFile = "prompts/conversationGuideExpert.txt"
-print("[red]System> Booting Expert LLM[/red]")
-
-prompts = [] #init prompt file
-
-#The below lines extract the prompt info from files and store them in the prompt list
-with open(promptFile, "r") as file:
-    prompts.append(file.read())
-with open(conversationGuideFile, "r") as file:
-    prompts.append(file.read())
-
-
 # Initialize a conversation instance for each selected image
 conversations = {}
 for image_path in images:
-    prompts = []  # Load or set up prompts as needed
-    with open("prompts/promptExpert.txt", "r") as file:
-        prompts.append(file.read())
-    with open("prompts/conversationGuideExpert.txt", "r") as file:
-        prompts.append(file.read())
+    #The below lines extract the prompt info from files and store them in the prompt list
+    constantPrompt = [] #init constant prompt
+    with open("prompts/modularPrompt.txt", "r") as file:
+        constantPrompt.append(file.read())
+        
+    modularPrompt = splitFileByMarker("prompts/modularConversationGuide.txt", "###")
+
+    with open("prompts/modularControllerExtrapPrompt.txt", "r") as file:
+        controlPrompt = file.read()
     
     # Use only the filename as the identifier for each conversation
     image_name = os.path.basename(image_path)  # Extract the filename from the path
-    conversations[image_name] = standardConversation("gpt-4o", prompts, image_name)
+    conversations[image_name] = controlledModularConversation("gpt-4o", constantPrompt, modularPrompt, controlPrompt, image_name)
 
 # Global variables to keep track of the current image and conversation instance
 current_image_index = 0
