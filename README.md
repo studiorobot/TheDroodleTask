@@ -44,13 +44,13 @@ Encode Message Internal:
 
 Creates a dictionary object following the structure described above. the input parameters follow the same rules described above with a few assumptions that can assigned alternate values at function call.
 
-`encodeMessageInternal(*textMessage*: *str*, *timestamp*: *str*, *role*: *str*, *assistantType*: *str*, *sessionNumber*: *int* **=** **-**1, *image*: *str* **=** "", *note*: *str* **=** "") -> *dict*`
+`encodeMessageInternal(textMessage: str, timestamp: str, role: str, assistantType: str, sessionNumber: int = -1, image: str = "", note: str = "") -> dict`
 
 Encode Message:
 
 Creates a dictionary object *according to the structure defined by openAI for sending to the OpenAI API*. Read the [openAI API documentation](https://platform.openai.com/docs/api-reference/chat/create) for more information on this. If given an image, the function also automatically decodes the image and adds this information into the message.
 
-`encodeMessage(textMessage: str, role: str, imagePath: str **=** "") -> dict`
+`encodeMessage(textMessage: str, role: str, imagePath: str = "") -> dict`
 
 - textMessage: text content of the message
 - role: which memeber of the conversation sent the message, must follow a message role (user, assistant, system).
@@ -60,7 +60,7 @@ Decode Image:
 
 converts an image file into [the base64 format accepted by the openAI API](https://platform.openai.com/docs/guides/vision/uploading-base-64-encoded-images) for use with models that have vision (at the time of writing, this is only gpt-4o)
 
-`decodeImage(*imagePath*: *str*) -> *str`* 
+`decodeImage(imagePath: str) -> str`
 
 ### Standard Conversation Class
 
@@ -72,7 +72,7 @@ One of the main functions of the standardConversation class is to automatically 
 
 Constructor:
 
-`__init__(*self*, *model*: *str*, *prompts*: list[*str*], *conversationName*: *str*, *savePath*: *str* **=** 'conversationArchive')`
+`__init__(self, model: str, prompts: list[str], conversationName: str, savePath: str = 'conversationArchive')`
 
 - Model: the name of the model being used using [openAI naming system](https://platform.openai.com/docs/models) (ex: "gpt-4o”, “gpt-3.5”, etc.)
 - Prompts: a list of strings containing the prompts used at the beginning of every conversation
@@ -81,43 +81,50 @@ Constructor:
 
 Functions:
 
-- Continue conversation with Dictionary: takes a new message, makes a request for reply to LLM, stores new message and reply into conversation save, returns reply message dictionary object. If the new message contains an image path, the image automatically added into the message.
+- **Continue conversation with Dictionary**: takes a new message, makes a request for reply to LLM, stores new message and reply into conversation save, returns reply message dictionary object. If the new message contains an image path, the image automatically added into the message.
     
     `contConversationDict(self, newMessage: dict) -> dict`
     
-- Continue conversation with string: takes new string message and possible string image path, makes request for reply to LLM, stores new message and reply into conversation save, returns reply message string. Assumes the following: time stamp is recorded when function is run, the new message is a user message, the session number is -1, the assistant type is LLM
+
+- **Continue conversation with string**: takes new string message and possible string image path, makes request for reply to LLM, stores new message and reply into conversation save, returns reply message string. Assumes the following: time stamp is recorded when function is run, the new message is a user message, the session number is -1, the assistant type is LLM
     
     `contConversation(self, newMessage: str, imagePath: str = "") -> str`
     
     THIS FUNCTION IS CONSIDERED LEGACY AND SHOULD BE USED ONLY IF NECCESSARY
     
-- Insert message Dictionary: takes a message Dictionary object and inserts it into the conversation without making a request to the LLM, stores new message into conversation save
+
+- **Insert message Dictionary**: takes a message Dictionary object and inserts it into the conversation without making a request to the LLM, stores new message into conversation save
     
     `insertMessageDict(self, newMessage: dict)`
     
-- Insert message String: takes message string, role string, and potentially image path and note. Inserts new message into conversation, stores new message into conversation save. Assumes the following: time stamp is recorded when function is run, the session number is -1, the assistant type is LLM
+
+- **Insert message String**: takes message string, role string, and potentially image path and note. Inserts new message into conversation, stores new message into conversation save. Assumes the following: time stamp is recorded when function is run, the session number is -1, the assistant type is LLM
     
     `insertMessage(self, newMessage: str, role: str, imagePath: str = "", note: str = "")`
     
     THIS FUNCTION IS CONSIDERED LEGACY AND SHOULD BE USED ONLY IF NECCESSARY
     
-- Turnover conversation dictionary: Without adding a new user message, a request is made to the LLM and the reply is added to the conversation save.
+
+- **Turnover conversation dictionary**: Without adding a new user message, a request is made to the LLM and the reply is added to the conversation save.
     
     `turnoverConversationDict(self)`
     
-- Make conversation Save: makes a permanent save file for the conversation. File is named using the conversationName defined at initialization and an 8 digit number based on the date at which the save was created.
+
+- **Make conversation Save**: makes a permanent save file for the conversation. File is named using the conversationName defined at initialization and an 8 digit number based on the date at which the save was created.
     
-    `makeConversationSave(*self*)`
+    `makeConversationSave(self)`
+
+
+- **Get Conversation**: Returns a list of message dictionary objects that represents the entire conversation thus far. Class member variables not modified.
     
-- Get Conversation: Returns a list of message dictionary objects that represents the entire conversation thus far. Class member variables not modified.
-    
-    `getConversation(*self*) -> list[*dict*]`
+    `getConversation(self) -> list[dict]`
     
 
-- Get Conversation String: Returns a single string version of the conversation that has so far taken place. Class member variables not modified.
+- **Get Conversation String**: Returns a single string version of the conversation that has so far taken place. Class member variables not modified.
     
-    `getConversationStr(*self*) -> *str*`
+    `getConversationStr(self) -> str`
     
-- Get Prompts: Returns a list of strings containing the prompts being used to make requests to the LLM. Class member variables not modified.
+
+- **Get Prompts**: Returns a list of strings containing the prompts being used to make requests to the LLM. Class member variables not modified.
     
-    `getPrompts(*self*) -> list[*str*]`
+    `getPrompts(self) -> list[str]`
