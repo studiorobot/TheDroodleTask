@@ -81,14 +81,31 @@ class modularConversation(standardConversation):
         return possibleModules
 
     #loop through all the possible next modules and generate quick possible messages using them   
+    # def possibleNextMessages(self) -> list[dict]:
+    #     possibleMessages = []
+    #     possibleModules = self.allPossibleStates()
+    #     for indevModule in possibleModules:
+    #         formattedPrompts = self._prepPrompts(self._constantPrompt+[self._modulePrompts[indevModule.value]])
+    #         conversation = formattedPrompts + removeImgInConv(self._conversation)
+    #         message = self._makeRequest(tempConversation = conversation, model = "gpt-4o-mini")
+    #         encodedMessage = encodeMessageInternal(message, "", "assistant-theoretical", "LLM", note = indevModule.name)
+    #         possibleMessages.append(encodedMessage)
+    #     return possibleMessages
+
+    # In modularConversation.py
     def possibleNextMessages(self) -> list[dict]:
         possibleMessages = []
         possibleModules = self.allPossibleStates()
         for indevModule in possibleModules:
-            formattedPrompts = self._prepPrompts(self._constantPrompt+[self._modulePrompts[indevModule.value]])
-            conversation = formattedPrompts + removeImgInConv(self._conversation)
-            message = self._makeRequest(tempConversation = conversation, model = "gpt-4o-mini")
-            encodedMessage = encodeMessageInternal(message, "", "assistant-theoretical", "LLM", note = indevModule.name)
+            # Prepare prompts without the image path
+            formattedPrompts = self._prepPrompts(self._constantPrompt + [self._modulePrompts[indevModule.value]])
+            conversation = formattedPrompts + removeImgInConv(self._conversation)  # Remove image from conversation
+            
+            # Generate response without vision processing
+            message = self._makeRequest(tempConversation=conversation, model="gpt-4o-mini")
+            
+            # Encode message with module name but without image
+            encodedMessage = encodeMessageInternal(message, "", "assistant-theoretical", "LLM", note=indevModule.name)
             possibleMessages.append(encodedMessage)
         return possibleMessages
 

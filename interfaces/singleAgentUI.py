@@ -10,6 +10,7 @@ from rich import print #update the print function to include more colors
 from conversationManagement.standardConversation.standardConversation import standardConversation #import standard conversation class
 from conversationManagement.modularConversation.controlledModularConversation import controlledModularConversation #import controlled modular conversation class
 from conversationManagement.conversationTools.conversationTools import splitFileByMarker #import file splitter
+from conversationManagement.preProcessing.preProcessing import PreProcessingAgent #import pre-processing agent
 import asyncio #used to run async functions
 import websockets #used to create a websocket connection
 import json #used to encode and decode json messages
@@ -54,6 +55,14 @@ current_conversation = conversations[os.path.basename(current_image)]
 
 async def handler(websocket, path):
     global current_image_index, current_image, current_conversation
+    
+    # Initialize the image analyzer with the current image
+    image_analyzer = PreProcessingAgent("gpt-4o-vision", current_image)
+    image_analyzer.analyze_image()  # Extract image features
+    current_image_features = image_analyzer.get_image_features()  # Retrieve features
+
+    # Set these features in the current conversation
+    current_conversation.set_image_features(current_image_features)
     
     while True:
         try:
