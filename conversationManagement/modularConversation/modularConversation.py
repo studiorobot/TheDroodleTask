@@ -45,6 +45,7 @@ class module(Enum):
         else:
             assert(False)
 
+
 class modularConversation(standardConversation):
     def __init__(self, model: str, constantPrompt: list[str], modulePrompts: list[str], conversationName: str, savePath: str = 'conversationArchive'):
         super().__init__(model = model, prompts = constantPrompt + modulePrompts, conversationName = conversationName, savePath = savePath)
@@ -55,11 +56,13 @@ class modularConversation(standardConversation):
         self._history = dict() #history of the used modules, used to limit possible steps
         self.addHistory(module(0), 0)
 
-    #Check if switching into the proposed module is possible
-    def checkSwitch(self, toModule: module) -> bool:
-        #TESTING LINE (REMOVE ASAP)
-        return True
 
+    #returns a list of all modules
+    def allModules(self) -> list['module']:
+        return list(module.__members__.values())
+    
+    #Check if switching into the proposed module is possible
+    def checkRecommendedSwitch(self, toModule: module) -> bool:
         #get list of prerequisites
         prereq = toModule.prerequisites()
 
@@ -69,25 +72,28 @@ class modularConversation(standardConversation):
         return False #if no prerequisites met
     
     #attempts to switch the state to another module, returns true if successful
-    def switchState(self, toModule: module) -> bool:
-        if not self.checkSwitch(toModule):
+    def switchStateBounded(self, toModule: module) -> bool:
+        if not self.checkRecommendedSwitch(toModule):
             return False
         
         self._state = toModule
 
+    #switches the state to another module without checking prerequisites
+    def switchStateUnbounded(self, toModule: module) -> bool:
+        self._state = toModule
+
     #generates a list of all the possible next modules
-    def allPossibleStates(self) -> list[module]:
+    def recommendedNextStates(self) -> list[module]:
         possibleModules = []
         for indevModule in module:
-            if self.checkSwitch(indevModule):
+            if self.checkRecommendedSwitch(indevModule):
                 possibleModules.append(indevModule)
         return possibleModules
-
-    # In modularConversation.py
-    def possibleNextMessages(self) -> list[dict]:
+    
+    # Generates a list of next messages for given modules
+    def extrapolate(self, modules: list[module]) -> list[dict]:
         possibleMessages = []
-        possibleModules = self.allPossibleStates()
-        for indevModule in possibleModules:
+        for indevModule in modules:
             # Prepare prompts without the image path
             formattedPrompts = self._prepPrompts(self._constantPrompt + [self._modulePrompts[indevModule.value]])
             conversation = formattedPrompts + removeImgInConv(self._conversation)  # Remove image from conversation
@@ -99,7 +105,7 @@ class modularConversation(standardConversation):
             encodedMessage = encodeMessageInternal(message, "", "assistant-theoretical", "LLM", note=indevModule.name)
             possibleMessages.append(encodedMessage)
         return possibleMessages
-
+    
     #Add a new entry into the module history
     def addHistory(self, newModule: module, index: int):
         #if module not in history, add a new list
