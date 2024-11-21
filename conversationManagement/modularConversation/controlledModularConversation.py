@@ -25,8 +25,9 @@ class controlledModularConversation(modularConversation):
         message = message + "Examples:\n"
 
         #get extrapolations
-        extrapolations = self.possibleNextMessages()
-        possibleModules = self.allPossibleStates()
+        possibleModules = self.allModules()
+        extrapolations = self.extrapolate(possibleModules)
+        
 
         #put all the extrapolations in one string
         extrapolationsStr = ""
@@ -49,6 +50,6 @@ class controlledModularConversation(modularConversation):
     #Main function for continuing the conversation using a message dict object
     def contConversationDict(self, newMessage: dict) -> dict:
         self.insertMessageDict(newMessage) #Add new message
-        self.switchState(self.decideSwitch()) #Switch the state
+        self.switchStateBounded(self.decideSwitch()) #Switch the state
         outMessage = self.turnoverConversationDict()
         return outMessage
