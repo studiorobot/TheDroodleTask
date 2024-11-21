@@ -1,8 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import '../styles/ChatWindow.css';
 
+const initialMessage = "Hello! Need any help with this droodle?";
+
 function ChatWindow({ currentImageIndex }) {
-  const [chatHistories, setChatHistories] = useState({});
+  const [chatHistories, setChatHistories] = useState({
+    0: [{ sender: 'assistant', text: initialMessage }]
+  });
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false); // Loading state to show "Thinking..."
   const websocket = useRef(null);
@@ -19,7 +23,9 @@ function ChatWindow({ currentImageIndex }) {
       if (data.status === "conversation_reset") {
         setChatHistories((prevHistories) => ({
           ...prevHistories,
-          [currentImageIndex]: []
+          [currentImageIndex]: [
+            { sender: 'assistant', text: initialMessage } // First message for the new image
+          ]
         }));
       } else if (data.message) {
         const assistantMessage = { sender: data.role, text: data.message };
@@ -35,6 +41,15 @@ function ChatWindow({ currentImageIndex }) {
         websocket.current.close();
       }
     };
+  }, [currentImageIndex]);
+
+  useEffect(() => {
+    setChatHistories((prevHistories) => ({
+      ...prevHistories,
+      [currentImageIndex]: prevHistories[currentImageIndex] || [
+        { sender: 'assistant', text: initialMessage }
+      ],
+    }));
   }, [currentImageIndex]);
 
   const currentChatHistory = chatHistories[currentImageIndex] || [];

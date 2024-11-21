@@ -53,6 +53,7 @@ image_path = current_image
 # current_conversation = conversations[current_image]
 current_conversation = conversations[os.path.basename(current_image)]
 
+
 async def handler(websocket, path):
     global current_image_index, current_image, current_conversation
     
@@ -85,6 +86,9 @@ async def handler(websocket, path):
                 current_image_index = (current_image_index + 1) % len(images)  # Cycle to the next image
                 current_image = images[current_image_index]
                 current_conversation = conversations[os.path.basename(current_image)]
+
+                initial_message = "Hello! Need any help with this droodle?"
+                current_conversation.insertMessage(initial_message, "assistant")
 
                 # Notify the frontend about the image switch and reset
                 await websocket.send(json.dumps({
