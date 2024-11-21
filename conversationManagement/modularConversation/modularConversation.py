@@ -55,6 +55,7 @@ class modularConversation(standardConversation):
         self._state = module(0) #the mode the chatbot is in, starts in the play mode
         self._history = dict() #history of the used modules, used to limit possible steps
         self.addHistory(module(0), 0)
+        self._historyLimit = 7 #limit of the history for module limitations
 
 
     #returns a list of all modules
@@ -65,9 +66,11 @@ class modularConversation(standardConversation):
     def checkRecommendedSwitch(self, toModule: module) -> bool:
         #get list of prerequisites
         prereq = toModule.prerequisites()
+        curentIndex = len(self._conversationInternal)
+        moduleHistory = self._history.get(toModule, [])
 
         for indevModule in prereq: #loop through all prerequistes
-            if self._history.get(indevModule, False) != False: #check if prerequisite is met
+            if moduleHistory != [] and (max(moduleHistory) - curentIndex) < self._historyLimit: #check if prerequisite is met
                 return True
         return False #if no prerequisites met
     
