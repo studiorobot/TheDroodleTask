@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import '../styles/ChatWindow.css';
 
-const initialMessage = "Hello! Need any help with this droodle?";
+const initialMessage = "Hello! I’m your AI guide for building a doodle caption. I’m designed to ask you questions and guide your reasoning but if you want to take control of your own creative process, I’ll be happy to help wherever possible.";
 
 function ChatWindow({ currentImageIndex }) {
   const [chatHistories, setChatHistories] = useState({
