@@ -57,6 +57,9 @@ class modularConversation(standardConversation):
 
     #Check if switching into the proposed module is possible
     def checkSwitch(self, toModule: module) -> bool:
+        #TESTING LINE (REMOVE ASAP)
+        return True
+
         #get list of prerequisites
         prereq = toModule.prerequisites()
 
@@ -79,18 +82,6 @@ class modularConversation(standardConversation):
             if self.checkSwitch(indevModule):
                 possibleModules.append(indevModule)
         return possibleModules
-
-    #loop through all the possible next modules and generate quick possible messages using them   
-    # def possibleNextMessages(self) -> list[dict]:
-    #     possibleMessages = []
-    #     possibleModules = self.allPossibleStates()
-    #     for indevModule in possibleModules:
-    #         formattedPrompts = self._prepPrompts(self._constantPrompt+[self._modulePrompts[indevModule.value]])
-    #         conversation = formattedPrompts + removeImgInConv(self._conversation)
-    #         message = self._makeRequest(tempConversation = conversation, model = "gpt-4o-mini")
-    #         encodedMessage = encodeMessageInternal(message, "", "assistant-theoretical", "LLM", note = indevModule.name)
-    #         possibleMessages.append(encodedMessage)
-    #     return possibleMessages
 
     # In modularConversation.py
     def possibleNextMessages(self) -> list[dict]:

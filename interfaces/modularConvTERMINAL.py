@@ -8,8 +8,8 @@ from prompt_toolkit import prompt #Used to manage inputs from the user in the ch
 from dotenv import load_dotenv #used to load the .env file
 from rich import print #update the print function to include more colors
 from conversationManagement.modularConversation.modularConversation import modularConversation, module #import conversation class
-from conversationManagement.modularConversation.controlledModularConversation import multiControlledModularConversation
-from conversationManagement.conversationTools.conversationTools import splitFileByMarker
+from conversationManagement.modularConversation.controlledModularConversation import controlledModularConversation
+from conversationManagement.conversationTools.conversationTools import splitFileByMarker, encodeMessageInternal
 from datetime import datetime #used to retrieve date and time for file name
 
 load_dotenv() #load the .env file
@@ -24,17 +24,16 @@ with open("prompts/modularPrompt.txt", "r") as file:
     
 modularPrompt = splitFileByMarker("prompts/modularConversationGuide.txt", "###")
 
-controlPrompts = [] #init control prompts
 with open("prompts/modularControllerPrompt.txt", "r") as file:
-    controlPrompts.append(file.read())
+    controlPrompt = file.read()
 with open("prompts/modularControllerExtrapPrompt.txt", "r") as file:
-    controlPrompts.append(file.read())
+    controlPrompt = file.read()
 
 #control types
 controlTypes = ["no extrapolation", "extrapolation"]
 
 #Init the conversation variable
-conv = multiControlledModularConversation("gpt-4o", constantPrompt, modularPrompt, controlPrompts, controlTypes, "modularConv")
+conv = controlledModularConversation("gpt-4o", constantPrompt, modularPrompt, controlPrompt, "modularConv")
 
 #prompt the user to input an image path and return the path string. If image path does not exist, prompt again
 def promptImage() -> str:
@@ -80,37 +79,12 @@ while True:
         continue
 
     #if there is an image, put it into the insert. Otherwise, insert the user message in and get all possible next messages
-    if len(imagePath) != 0:
-        conv.insertMessage(userInput, "user", imagePath)
-        imagePath = ""
-    else:          
-        conv.insertMessage(userInput, "user", imagePath)
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S") #get timestamp
+    message = encodeMessageInternal(userInput, timestamp, "user", "LLM", image = imagePath)
+    if(imagePath != ""):
+        imagePath = "" #reset the image path
 
-    #Get Next possibilities
-    possibleMessages = conv.possibleNextMessages()
-    possibleModules = conv.allPossibleStates()
-    
-    #print each module's response
-    for i in range(len(possibleModules)):
-        possibleMessage = possibleMessages[i]
-        indevModule = possibleModules[i]
-        print("[pink]Assistant - " + indevModule.name + "(" + str(indevModule.value) + ")> "+possibleMessage.get("content")+"[/pink]")
-    
-    print("\n")
-    
-    #Get controller responses
-    controllerResponses = conv.decideAllSwitch()
+    #Continue the conversation
+    response = conv.contConversationDict(message)
 
-    for i in range(len(controllerResponses)):
-        print("[pink]" + controlTypes[i] + ": " + str(controllerResponses[i]) + "[/pink]")
-
-    #Ask for module selection
-    print("\n[red]System> Select a Module (a number 0 - 9)[/red]")
-    userInput = prompt("\nUser> ")
-    toModule = module(int(userInput))
-
-    #Swtich the conversation mode and continue
-    conv.switchState(toModule)
-    response = conv.turnoverConversationDict()
-
-    print("\n[blue]Assistant - " + toModule.name + "(" + str(toModule.value) + ")> "+response.get("content")+"[/blue]")
+    print("\n[blue]Assistant - " + conv.getState().name + "(" + str(conv.getState().value) + ")> "+response.get("content")+"[/blue]")

@@ -42,12 +42,16 @@ def splitFileByMarker(filename: str, marker: str) -> list[str]:
 
 #Method that removes any images from a conversation formatted with the openAI format
 def removeImgInConv(conversation: list[dict]) -> list[dict]:
-    new_conversation = []
+    new_conversation = [] #init new conversation
+
     for message in conversation:
-        if "image_url" in message.get("content", {}):
-            new_message = message.copy()
-            new_message["content"] = {key: value for key, value in message["content"].items() if key != "image_url"}
-            new_conversation.append(new_message)
-        else:
-            new_conversation.append(message)
+        role = message.get("role") #get the role of the message
+
+        #get the text content of the message
+        for part in message.get("content", []):
+            if part.get("type") == "text":
+                message_content = part.get("text")
+        
+        #append the message with the tex only to the new conversation
+        new_conversation.append(encodeMessage(message_content, role))
     return new_conversation
