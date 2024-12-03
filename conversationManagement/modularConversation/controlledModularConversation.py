@@ -50,6 +50,6 @@ class controlledModularConversation(modularConversation):
     #Main function for continuing the conversation using a message dict object
     def contConversationDict(self, newMessage: dict) -> dict:
         self.insertMessageDict(newMessage) #Add new message
-        self.switchStateBounded(self.decideSwitch()) #Switch the state
+        self.switchStateUnbounded(self.decideSwitch()) #Switch the state
         outMessage = self.turnoverConversationDict()
         return outMessage

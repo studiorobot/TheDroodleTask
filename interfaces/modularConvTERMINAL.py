@@ -14,9 +14,6 @@ from datetime import datetime #used to retrieve date and time for file name
 
 load_dotenv() #load the .env file
 
-#Select the propt and conversationGuide Files
-conversationGuideFile = "prompts/conversationGuideExpert.txt"
-
 #The below lines extract the prompt info from files and store them in the prompt list
 constantPrompt = [] #init constant prompt
 with open("prompts/modularPrompt.txt", "r") as file:
@@ -29,11 +26,15 @@ with open("prompts/modularControllerPrompt.txt", "r") as file:
 with open("prompts/modularControllerExtrapPrompt.txt", "r") as file:
     controlPrompt = file.read()
 
-#control types
-controlTypes = ["no extrapolation", "extrapolation"]
-
 #Init the conversation variable
 conv = controlledModularConversation("gpt-4o", constantPrompt, modularPrompt, controlPrompt, "modularConv")
+
+#Add the intial message
+initial_message_str = "Hello! I’m your AI guide for building a doodle caption. I’m designed to ask you questions and guide your reasoning but if you want to take control of your own creative process, I’ll be happy to help wherever possible."
+timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S") #get timestamp
+initial_message = encodeMessageInternal(initial_message_str, timestamp, "assistant", "LLM")
+conv.insertMessageDict(initial_message)
+print("\n[blue]Assistant - init(N/A)> "+initial_message_str+"[/blue]")
 
 #prompt the user to input an image path and return the path string. If image path does not exist, prompt again
 def promptImage() -> str:

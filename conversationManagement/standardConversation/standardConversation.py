@@ -110,8 +110,6 @@ class standardConversation:
         output = ""
         for message in self._conversationInternal:
             output = output + message.get("role")
-            if message.get("note") != "":
-                output = output + " (" + message.get("note") + ")"
             output = output + "> "
             output = output + message.get("content") + "\n"
         return output
@@ -132,8 +130,9 @@ class standardConversation:
         if model is None:
             model = self._model
         
-        print("\n\nrequest made using:" + str(tempConversation)+"\n\n") #delicious delicios debugging statement
+        print("\n\nrequest made using:" + str(tempConversation)+"\n") #delicious delicios debugging statement
         output = self._client.chat.completions.create(model = model, messages = tempConversation) #request completion
+        print("response received:" + output.choices[0].message.content+"\n\n") #delicious debugging statement
         return output.choices[0].message.content #return message content
 
         # return "omg wow the LLM talked" #yummy debug statement

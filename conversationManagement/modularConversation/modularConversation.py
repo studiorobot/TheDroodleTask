@@ -10,9 +10,7 @@ class module(Enum):
     GROUNDING = 4
     CAPTIONING = 5
     REFINING = 6
-    FEEDBACK = 7
-    SELF_EVALUATION = 8
-    AIDING = 9
+    AIDING = 7
 
     #Functions that check the attributes of each state
     def isDivergent(self) -> bool:
@@ -22,7 +20,7 @@ class module(Enum):
         return self in {module.GROUNDING, module.CAPTIONING, module.REFINING}
     
     def isAny(self) -> bool:
-        return self in {module.FEEDBACK, module.SELF_EVALUATION, module.AIDING}
+        return self == module.AIDING
     
     #Get the list of neccessary before states to get to this module
     def prerequisites(self) -> list['module']:
@@ -38,10 +36,6 @@ class module(Enum):
             return {module.CAPTIONING, module.GROUNDING}
         elif self == module.REFINING:
             return {module.REFINING, module.CAPTIONING}
-        elif self == module.FEEDBACK:
-            return {module.FEEDBACK, module.REFINING, module.CAPTIONING}
-        elif self == module.SELF_EVALUATION:
-            return {module.SELF_EVALUATION, module.REFINING, module.CAPTIONING}
         else:
             assert(False)
 
@@ -57,6 +51,9 @@ class modularConversation(standardConversation):
         self.addHistory(module(0), 0)
         self._historyLimit = 7 #limit of the history for module limitations
 
+        #FOR TESTING PURPOSES ONLY
+        self._test_extrap_main = ["A droodle is a simple abstract drawing that “comes into focus” (in a surprising way) with the addition of a clever title. There is no “correct” droodle caption but some are more creative than others and good droodle captions often come from stories around the image. There is  some assistant having a conversation about captioning a droodle using different styles that you are observing. Your job is to explain how the style given in the next message can be used to further the conversation. You should argue for your style and why it is a good approach. Use both the style in the next message and the conversation history given by the user to make your argument. your argument should be no greater than 2 sentences. YOUR MESSAGES MUST NOT BE A REPLIES TO THE CONVERSATION BUT CONCEPTUAL EXPLANATIONS."]
+
 
     #returns a list of all modules
     def allModules(self) -> list['module']:
@@ -67,9 +64,9 @@ class modularConversation(standardConversation):
         #get list of prerequisites
         prereq = toModule.prerequisites()
         curentIndex = len(self._conversationInternal)
-        moduleHistory = self._history.get(toModule, [])
 
         for indevModule in prereq: #loop through all prerequistes
+            moduleHistory = self._history.get(indevModule, [])
             if moduleHistory != [] and (max(moduleHistory) - curentIndex) < self._historyLimit: #check if prerequisite is met
                 return True
         return False #if no prerequisites met
@@ -98,8 +95,9 @@ class modularConversation(standardConversation):
         possibleMessages = []
         for indevModule in modules:
             # Prepare prompts without the image path
-            formattedPrompts = self._prepPrompts(self._constantPrompt + [self._modulePrompts[indevModule.value]])
-            conversation = formattedPrompts + removeImgInConv(self._conversation)  # Remove image from conversation
+            formattedPrompts = self._prepPrompts(self._test_extrap_main + [self._modulePrompts[indevModule.value]])
+            formattedMessage = encodeMessage(self.getConversationStr(), "user")
+            conversation = formattedPrompts + [formattedMessage]
             
             # Generate response without vision processing
             message = self._makeRequest(tempConversation=conversation, model="gpt-4o-mini")
