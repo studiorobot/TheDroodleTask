@@ -21,13 +21,15 @@ with open("prompts/modularPrompt.txt", "r") as file:
     
 modularPrompt = splitFileByMarker("prompts/modularConversationGuide.txt", "###")
 
-with open("prompts/modularControllerPrompt.txt", "r") as file:
-    controlPrompt = file.read()
+controlPrompts = [] #init control prompt 
 with open("prompts/modularControllerExtrapPrompt.txt", "r") as file:
-    controlPrompt = file.read()
+    controlPrompts.append(file.read())
+with open("prompts/moduleArgumentPrompt.txt", "r") as file:
+    controlPrompts.append(file.read())
+
 
 #Init the conversation variable
-conv = controlledModularConversation("gpt-4o", constantPrompt, modularPrompt, controlPrompt, "modularConv")
+conv = controlledModularConversation("gpt-4o", constantPrompt, modularPrompt, controlPrompts, "modularConv")
 
 #Add the intial message
 initial_message_str = "Hello! I’m your AI guide for building a doodle caption. I’m designed to ask you questions and guide your reasoning but if you want to take control of your own creative process, I’ll be happy to help wherever possible."

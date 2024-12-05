@@ -2,12 +2,21 @@ from ..modularConversation.modularConversation import modularConversation, modul
 from ..standardConversation.standardConversation import standardConversation #controller 
 from ..conversationTools import encodeMessage, encodeMessageInternal #message encoder
 import re #used to do a better extraction from controller responses
+from datetime import datetime #used to retrieve date and time for file name
 
 class controlledModularConversation(modularConversation):
-    def __init__(self, model: str, constantPrompt: list[str], modulePrompts: list[str], controlPrompt: str, conversationName: str, savePath: str = 'conversationArchive', imageFeatures=None):
-        super().__init__(model, constantPrompt, modulePrompts, conversationName, savePath)
+    def __init__(self, model: str, constantPrompts: list[str], modulePrompts: list[str], controlPrompt: str, conversationName: str, savePath: str = 'conversationArchive', imageFeatures=None):
+        super().__init__(model, constantPrompts[0], modulePrompts, conversationName, savePath)
         self._controller = standardConversation(model, [controlPrompt], conversationName + " - Controller", savePath)
         self.image_features = imageFeatures  # Pre-processed image features, if provided
+        self._argument_agents = []  # List of agents used to make arguments for their respective modules
+        
+        # Create agents for each module
+        for indevModule in self.allModules():
+            agent_name = conversationName + " - " + indevModule.name
+            agent_prompt = [constantPrompts[1], modulePrompts[indevModule.value]]
+            agent = standardConversation(model, agent_prompt, agent_name, savePath)
+            self._argument_agents.append(agent)
 
     def set_image_features(self, image_features):
         self.image_features = image_features  # Update features as needed
@@ -26,7 +35,7 @@ class controlledModularConversation(modularConversation):
 
         #get extrapolations
         possibleModules = self.allModules()
-        extrapolations = self.extrapolate(possibleModules)
+        extrapolations = self.get_module_arguments(possibleModules)
         
 
         #put all the extrapolations in one string
@@ -46,6 +55,15 @@ class controlledModularConversation(modularConversation):
         reply = self._controller.contConversationDict(messageDict).get("content")
 
         return module(int(re.search(r'\d+', reply).group()))
+    
+    def get_module_arguments(self, modules: list[module]) -> list[dict]:
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S") #get timestamp
+        formattedMessage = encodeMessageInternal(self.getConversationStr(), timestamp, "user", "LLM")
+        outputMessages = []
+        for agent in self._argument_agents:
+            message = agent.contConversationDict(formattedMessage)
+            outputMessages.append(message)
+        return outputMessages
     
     #Main function for continuing the conversation using a message dict object
     def contConversationDict(self, newMessage: dict) -> dict:
