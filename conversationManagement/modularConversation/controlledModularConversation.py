@@ -5,16 +5,16 @@ import re #used to do a better extraction from controller responses
 from datetime import datetime #used to retrieve date and time for file name
 
 class controlledModularConversation(modularConversation):
-    def __init__(self, model: str, constantPrompts: list[str], modulePrompts: list[str], controlPrompt: str, conversationName: str, savePath: str = 'conversationArchive', imageFeatures=None):
-        super().__init__(model, constantPrompts[0], modulePrompts, conversationName, savePath)
-        self._controller = standardConversation(model, [controlPrompt], conversationName + " - Controller", savePath)
+    def __init__(self, model: str, constantPrompt: list[str], modulePrompts: list[str], controlPrompts: list[str], conversationName: str, savePath: str = 'conversationArchive', imageFeatures=None):
+        super().__init__(model, constantPrompt, modulePrompts, conversationName, savePath)
+        self._controller = standardConversation(model, [controlPrompts[0]], conversationName + " - Controller", savePath)
         self.image_features = imageFeatures  # Pre-processed image features, if provided
         self._argument_agents = []  # List of agents used to make arguments for their respective modules
         
         # Create agents for each module
         for indevModule in self.allModules():
             agent_name = conversationName + " - " + indevModule.name
-            agent_prompt = [constantPrompts[1], modulePrompts[indevModule.value]]
+            agent_prompt = [controlPrompts[1], modulePrompts[indevModule.value]]
             agent = standardConversation(model, agent_prompt, agent_name, savePath)
             self._argument_agents.append(agent)
 
@@ -58,8 +58,12 @@ class controlledModularConversation(modularConversation):
     
     def get_module_arguments(self, modules: list[module]) -> list[dict]:
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S") #get timestamp
-        formattedMessage = encodeMessageInternal(self.getConversationStr(), timestamp, "user", "LLM")
+
+        #make a message containing the last two messages from the conversation
+        formattedMessage = encodeMessageInternal(self._getLastTwoMessages(), timestamp, "user", "LLM")
         outputMessages = []
+
+        #Call each agent to get their argument
         for agent in self._argument_agents:
             message = agent.contConversationDict(formattedMessage)
             outputMessages.append(message)
@@ -71,3 +75,18 @@ class controlledModularConversation(modularConversation):
         self.switchStateUnbounded(self.decideSwitch()) #Switch the state
         outMessage = self.turnoverConversationDict()
         return outMessage
+    
+    def _getLastTwoMessages(self) -> str:
+        #get the last two messages (or one if there is only one)
+        if len(self._conversationInternal) >= 2:
+            lastMessages = self._conversationInternal[-2:] #get the last two messages
+        else:
+            lastMessages = self._conversationInternal[-1:] #get the last message
+        
+        #Format the output
+        output = ""
+        for message in lastMessages:
+            output = output + message.get("role")
+            output = output + "> "
+            output = output + message.get("content") + "\n"
+        return output
