@@ -12,10 +12,17 @@ from datetime import datetime #used to retrieve date
 import json #used to store messages in json files
 
 from conversationManagement.conversationTools.conversationTools import encodeMessage, encodeMessageInternal, getTimeStamp #message encoders
+from ..conversationTools import conversationErrors #error handling
 
 class standardConversation:
 
     def __init__(self, model: str, prompts: list[str], conversationName: str, savePath: str = 'conversationArchive'):
+        #Make some invariant assertions
+        if not isinstance(prompts, list):
+            raise conversationErrors.ImproperPromptFormatError("Prompts must be in a list")
+        if not isinstance(conversationName, str):
+            raise conversationErrors.InvalidInitVariableError("Conversation name must be a string")
+        
         #define instance variables from function call
         self._model = model
         self._prompts = prompts
@@ -26,10 +33,12 @@ class standardConversation:
         self._conversationInternal = [] #conversation variable for our storage
 
         #Assert staments to check init variables
-        assert os.path.exists(savePath), "Invalid path given (create a conversationArchive folder in the root directory)"
+        if not os.path.exists(savePath):
+            raise conversationErrors.StorageFolderNotFoundError("Invalid save path given (create a conversationArchive folder in the root directory)")
 
         #define and extract instance variables from .env file
-        load_dotenv()
+        if not load_dotenv():
+            raise conversationErrors.InvalidEnvError("Invalid .env file")
         self._usingUmichApi = os.getenv("USING_UMICH_API").lower() in ('true', '1', 't')
 
         #If the client requires the umich API to be used, access it that way. Otherwise, open the standard openAI API

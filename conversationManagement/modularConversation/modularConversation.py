@@ -4,6 +4,7 @@ from ..conversationTools import conversationErrors #error handling
 from enum import Enum #used to define the module states
 import os #file management
 import re #used to do a better extraction from controller responses
+import logging #used to log errors and notes
 
 class module(Enum):
     PLAY  = 0
@@ -29,9 +30,12 @@ class module(Enum):
 class modularConversation(standardConversation):
     def __init__(self, model: str, constantPrompt: list[str], modulePrompts: list[str], controlPrompts: list[str], conversationName: str, savePath: str = 'conversationArchive', imageFeatures=None):
         #Make some invariant assertions
-        assert len(modulePrompts) == len(module), "Module prompts must be equal to the number of modules"
-        assert len(controlPrompts) == 2, "Control prompts must be of length 2"
-        assert len(constantPrompt) > 0, "Constant prompts must have at least one prompt"
+        if len(modulePrompts) != len(module):
+            raise conversationErrors.ImproperPromptFormatError("Module prompts must be equal to the number of modules")
+        if len(controlPrompts) != 2:
+            raise conversationErrors.ImproperPromptFormatError("Control prompts must be of length 2")
+        if len(constantPrompt) <= 0:
+            raise conversationErrors.InvalidInitVariableError("Constant prompts must have at least one prompt")
         
         #make the new directory for the modular conversation
         savePath = savePath+"/modularConversation - "+conversationName
@@ -106,24 +110,23 @@ class modularConversation(standardConversation):
         #Get the chat history
         message = self.getConversationStr()
 
-        #make and append the extrapolations
+        #make and append the arguments
         #Add marker
         message = message + "Examples:\n"
 
-        #get extrapolations
+        #get arguments
         possibleModules = self.allModules()
-        extrapolations = self.get_module_arguments(possibleModules)
-        
+        arguments = self.get_module_arguments(possibleModules)
 
-        #put all the extrapolations in one string
-        extrapolationsStr = ""
+        #put all the arguments in one string
+        argumentStr = ""
         for i in range(len(possibleModules)):
-            possibleMessage = extrapolations[i]
+            possibleMessage = arguments[i]
             indevModule = possibleModules[i]
-            extrapolationsStr = extrapolationsStr + "Assistant - " + indevModule.name + "(" + str(indevModule.value) + ")> "+possibleMessage.get("content")+"\n"
+            argumentStr = argumentStr + "Assistant - " + indevModule.name + "(" + str(indevModule.value) + ")> "+possibleMessage.get("content")+"\n"
 
-        #append extrapolations
-        message = message + "\n\n" + extrapolationsStr
+        #append arguments
+        message = message + "\n\n" + argumentStr
         
         #Package the new message
         messageDict = encodeMessageInternal(message, "", "user", "Controller")
@@ -184,11 +187,13 @@ class modularConversation(standardConversation):
         #Try to get state to switch to
         try:
             toModule = self.decideSwitch()
-        except conversationErrors.moduleExtractError:
+        except conversationErrors.moduleExtractError or conversationErrors.SwitchOutOfBoundsError:
+            logging.warning("Error in switching state, keeping current state")
             return False
         
         #Switch the state
         self._state = toModule
+        logging.info("Switched to module: "+toModule.name)
         return True
     
     #HELPERS---------------------------------------------------------------
@@ -211,10 +216,14 @@ class modularConversation(standardConversation):
     
     def _extract_module(reply: str):
         match = re.search(r'\d+', reply)
-        if match:
-            return module(int(match.group()))
-        else:
+        if not match:
+            #No number in the response
             raise conversationErrors.moduleExtractError("No digits found in message to determine the module.")
+        elif int(match.group()) > len(module) or int(match.group()) < 0:
+            #Number out of bounds
+            raise conversationErrors.SwitchOutOfBoundsError("Module out of bounds")
+        else:
+            return module(int(match.group()))
     
     #ACCESSORS--------------------------------------------------------------
     
