@@ -1,8 +1,8 @@
 from ..standardConversation.standardConversation import standardConversation #parent 
-from ..conversationTools.conversationTools import encodeMessage, encodeMessageInternal, removeImgInConv #message encoder
+from ..conversationTools.conversationTools import encodeMessage, encodeMessageInternal, removeImgInConv, getTimeStamp #message encoder
+from ..conversationTools import conversationErrors #error handling
 from enum import Enum #used to define the module states
 import os #file management
-from datetime import datetime #used to retrieve date and time for file name
 import re #used to do a better extraction from controller responses
 
 class module(Enum):
@@ -45,7 +45,7 @@ class modularConversation(standardConversation):
         self._state = module(0) #the mode the chatbot is in, starts in the play mode
         self._history = dict() #history of the used modules, used to limit possible steps
         self.image_features = imageFeatures  # Pre-processed image features, if provided
-        self.addHistory(module(0), 0)
+        self._recordHistory()
 
         #Create CONTROL agent
         self._controller = standardConversation(model, [controlPrompts[0]], conversationName + " - Controller", savePath)
@@ -73,68 +73,34 @@ class modularConversation(standardConversation):
             agent = standardConversation(model, agent_prompt, agent_name, savePath)
             self._argument_agents.append(agent)
     
-    #switches the state to another module without checking prerequisites
-    def switchStateUnbounded(self, toModule: module) -> bool:
-        self._state = toModule
+    #DECISION MAKING--------------------------------------------------------
 
-    #generates a list of all the possible next modules
-    def recommendedNextStates(self) -> list[module]:
-        possibleModules = []
-        for indevModule in module:
-            if self.checkRecommendedSwitch(indevModule):
-                possibleModules.append(indevModule)
-        return possibleModules
+    #Get the arguments for each module, speaking to each argument agent
+    def get_module_arguments(self, modules: list[module]) -> list[dict]:
+        #make a message containing the last two messages from the conversation
+        formattedMessage = encodeMessageInternal(self._getLastMessages(2), getTimeStamp(), "user", "LLM")
+        outputMessages = []
+
+        #Call each agent to get their argument
+        for agent in self._argument_agents:
+            message = agent.contConversationDict(formattedMessage)
+            outputMessages.append(message)
+        return outputMessages
+
+    # Gets given module to talk
+    def makeModuleSpeak(self, module_in: module) -> dict:
+        #Get new messages since module last spoke
+        lastModuleIndex = self._getLastModuleIndex(module_in)
+        if lastModuleIndex == -1: #if no history, get all messages
+            lastMessages = self._getLastMessages()
+        else: #if history, get messages from when last spoke
+            lastMessages = self._getLastMessages(self.getIndex()-lastModuleIndex)
+        
+        #Make request to module speaking agent
+        agent = self._speaking_agents[module_in.value]
+        message = encodeMessageInternal(lastMessages, getTimeStamp(), "user", "LLM")
+        return agent.contConversationDict(message)
     
-    # Generates a list of next messages for given modules
-    def extrapolate(self, modules: list[module]) -> list[dict]:
-        possibleMessages = []
-        for indevModule in modules:
-            # Prepare prompts without the image path
-            formattedPrompts = self._prepPrompts(self._constantPrompt + [self._modulePrompts[indevModule.value]])
-            conversation = formattedPrompts + removeImgInConv(self._conversation)  # Remove image from conversation
-            
-            # Generate response without vision processing
-            message = self._makeRequest(tempConversation=conversation, model="gpt-4o-mini")
-            
-            # Encode message with module name but without image
-            encodedMessage = encodeMessageInternal(message, "", "assistant-theoretical", "LLM", note=indevModule.name)
-            possibleMessages.append(encodedMessage)
-        return possibleMessages
-    
-    #Add a new entry into the module history
-    def addHistory(self, newModule: module, index: int):
-        #if module not in history, add a new list
-        if self._history.get(newModule, False) == False:
-            self._history[newModule] = [index]
-        else: #if module is in history, add new entry to list
-            self._history[newModule].append(index)
-
-    #get the state of the chatbot
-    def getState(self) -> module:
-        return self._state
-    
-    #Adding history management into the insertMessage method
-    def insertMessageDict(self, newMessage: dict):
-        if newMessage.get("role") == "assistant":
-            newMessage["note"] = self._state.name
-        super().insertMessageDict(newMessage)
-        self.addHistory(self._state, len(self._conversationInternal)) #add the history in
-
-    #Prep the propmts for completion
-    def _prepPrompts(self, prompts: list[str] = None) -> list[dict]:
-        #if not overridden by entry value, assemble appropriate modular and constant prompts into list
-        if prompts is None:
-            prompts = self._constantPrompt + [self._modulePrompts[self._state.value]]
-        return super()._prepPrompts(prompts) #make super do the rest
-    
-    #Update the image features
-    def set_image_features(self, image_features):
-        self.image_features = image_features  # Update features as needed
-
-    #Update the current image
-    def set_current_image(self, image_path):
-        self.current_image = image_path
-
     #Retrive the controller given by the index and get their decision
     def decideSwitch(self) -> module:
         #Get the chat history
@@ -165,36 +131,75 @@ class modularConversation(standardConversation):
         #make the request
         reply = self._controller.contConversationDict(messageDict).get("content")
 
-        return module(int(re.search(r'\d+', reply).group()))
+        return self._extract_module(reply)
     
-    #Get the arguments for each module, speaking to each argument agent
-    def get_module_arguments(self, modules: list[module]) -> list[dict]:
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S") #get timestamp
+    #CONVERSATION MANAGEMENT------------------------------------------------
 
-        #make a message containing the last two messages from the conversation
-        formattedMessage = encodeMessageInternal(self._getLastTwoMessages(), timestamp, "user", "LLM")
-        outputMessages = []
-
-        #Call each agent to get their argument
-        for agent in self._argument_agents:
-            message = agent.contConversationDict(formattedMessage)
-            outputMessages.append(message)
-        return outputMessages
+    #Adding history management into the insertMessage method
+    def insertMessageDict(self, newMessage: dict):
+        if newMessage.get("role") == "assistant":
+            newMessage["note"] = self._state.name
+        super().insertMessageDict(newMessage)
+        self._recordHistory() #add the history in
     
     #Main function for continuing the conversation using a message dict object
     def contConversationDict(self, newMessage: dict) -> dict:
         self.insertMessageDict(newMessage) #Add new message
-        self.switchStateUnbounded(self.decideSwitch()) #Switch the state
+        self._switchStateUnbounded() #Switch the state
         outMessage = self.turnoverConversationDict()
         return outMessage
     
-    #Helper function to get the last two messages as a string
-    def _getLastTwoMessages(self) -> str:
-        #get the last two messages (or one if there is only one)
-        if len(self._conversationInternal) >= 2:
-            lastMessages = self._conversationInternal[-2:] #get the last two messages
+    #Get a response from the LLM and store it without a human input, modified to use multiple agents
+    def turnoverConversationDict(self) -> dict:
+        return self.makeModuleSpeak(self.getState()) #make the module speak
+    
+    #Update the image features
+    def set_image_features(self, image_features):
+        self.image_features = image_features  # Update features as needed
+
+    #Update the current image
+    def set_current_image(self, image_path):
+        self.current_image = image_path
+
+    #Add a new entry into the module history
+    def _recordHistory(self):
+        #get the current module and index
+        current_module = self.getState()
+        index = self.getIndex()
+
+        #if module not in history, add a new list
+        if self._history.get(current_module, False) == False:
+            self._history[current_module] = [index]
+        else: #if module is in history, add new entry to list
+            self._history[current_module].append(index)
+
+    def _getLastModuleIndex(self, module_in: module) -> int:
+        if self._history.get(module_in, False) == False:
+            return -1
         else:
-            lastMessages = self._conversationInternal[-1:] #get the last message
+            return self._history[module_in][-1]
+
+    #switches the state to another module
+    def _switchStateUnbounded(self) -> bool:
+        #Try to get state to switch to
+        try:
+            toModule = self.decideSwitch()
+        except conversationErrors.moduleExtractError:
+            return False
+        
+        #Switch the state
+        self._state = toModule
+        return True
+    
+    #HELPERS---------------------------------------------------------------
+    
+    #Helper function to get the last two messages as a string
+    def _getLastMessages(self, number: int = None) -> str:
+        #get the last messages (or one if there is only one)
+        if len(self._conversationInternal) < number or number == None:
+            lastMessages = self._conversationInternal
+        else:
+            lastMessages = self._conversationInternal[-number:]
         
         #Format the output
         output = ""
@@ -204,6 +209,23 @@ class modularConversation(standardConversation):
             output = output + message.get("content") + "\n"
         return output
     
+    def _extract_module(reply: str):
+        match = re.search(r'\d+', reply)
+        if match:
+            return module(int(match.group()))
+        else:
+            raise conversationErrors.moduleExtractError("No digits found in message to determine the module.")
+    
+    #ACCESSORS--------------------------------------------------------------
+    
     #Helper function that returns a list of all modules
     def allModules(self) -> list['module']:
         return list(module.__members__.values())
+    
+    #get the state of the chatbot
+    def getState(self) -> module:
+        return self._state
+    
+    #get the index of the conversation
+    def getIndex(self) -> int:
+        return len(self._conversationInternal)-1

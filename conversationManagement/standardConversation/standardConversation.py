@@ -11,7 +11,7 @@ from prompt_toolkit import prompt #Used to manage inputs from the user in the ch
 from datetime import datetime #used to retrieve date
 import json #used to store messages in json files
 
-from conversationManagement.conversationTools.conversationTools import encodeMessage, encodeMessageInternal #message encoders
+from conversationManagement.conversationTools.conversationTools import encodeMessage, encodeMessageInternal, getTimeStamp #message encoders
 
 class standardConversation:
 
@@ -51,7 +51,7 @@ class standardConversation:
 
     #**LEGACY** Main function for continuing the conversation
     def contConversation(self, newMessage: str, imagePath: str = "") -> str:
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S") #get timestamp
+        timestamp = getTimeStamp() #get timestamp
         message = encodeMessageInternal(newMessage, timestamp, "user", "LLM", image = imagePath) #package message
         outputMessage = self.contConversationDict(message)
         return outputMessage.get("content")
@@ -68,7 +68,7 @@ class standardConversation:
         lastMessage = self._conversationInternal[-1]
 
         outputMessageText = self._makeRequest() #Make request to chat model
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S") #get timestamp
+        timestamp = getTimeStamp() #get timestamp
         sessionNumber = lastMessage.get("session_number") #get session number
         assistantType = lastMessage.get("assistant_type")
         outputMessage = encodeMessageInternal(outputMessageText, timestamp, "assistant", assistantType, sessionNumber = sessionNumber) #package message
@@ -79,7 +79,7 @@ class standardConversation:
     #**LEGACY** Insert a message into the conversation variable and file
     def insertMessage(self, newMessage: str, role: str, imagePath: str = "", note: str = ""):
         assert role in ("user", "assistant", "system"), "Invalid role given"
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S") #get timestamp
+        timestamp = getTimeStamp() #get timestamp
         message = encodeMessageInternal(newMessage, timestamp, role, "LLM", image = imagePath, note = note)
         self.insertMessageDict(message)
 

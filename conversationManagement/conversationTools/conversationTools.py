@@ -1,4 +1,5 @@
 import base64 #used to turn image files into useable data for the api
+from datetime import datetime #used to retrieve date and time for file name
 
 #Encode a message, role, and potential image into a dictionary object
 def encodeMessage(textMessage: str, role: str, imagePath: str = ""):
@@ -55,3 +56,6 @@ def removeImgInConv(conversation: list[dict]) -> list[dict]:
         #append the message with the tex only to the new conversation
         new_conversation.append(encodeMessage(message_content, role))
     return new_conversation
+
+def getTimeStamp() -> str:
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S") #get timestamp
