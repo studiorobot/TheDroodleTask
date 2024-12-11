@@ -8,7 +8,6 @@ from prompt_toolkit import prompt #Used to manage inputs from the user in the ch
 from dotenv import load_dotenv #used to load the .env file
 from rich import print #update the print function to include more colors
 from conversationManagement.modularConversation.modularConversation import modularConversation, module #import conversation class
-from conversationManagement.modularConversation.controlledModularConversation import controlledModularConversation
 from conversationManagement.conversationTools.conversationTools import splitFileByMarker, encodeMessageInternal
 from datetime import datetime #used to retrieve date and time for file name
 
@@ -29,7 +28,7 @@ with open("prompts/moduleArgumentPrompt.txt", "r") as file:
 
 
 #Init the conversation variable
-conv = controlledModularConversation("gpt-4o", constantPrompt, modularPrompt, controlPrompts, "modularConv")
+conv = modularConversation("gpt-4o", constantPrompt, modularPrompt, controlPrompts, "modularConv")
 
 #Add the intial message
 initial_message_str = "Hello! I’m your AI guide for building a doodle caption. I’m designed to ask you questions and guide your reasoning but if you want to take control of your own creative process, I’ll be happy to help wherever possible."

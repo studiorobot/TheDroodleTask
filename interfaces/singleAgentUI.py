@@ -8,7 +8,6 @@ from prompt_toolkit import prompt #Used to manage inputs from the user in the ch
 from dotenv import load_dotenv #used to load the .env file
 from rich import print #update the print function to include more colors
 from conversationManagement.standardConversation.standardConversation import standardConversation #import standard conversation class
-from conversationManagement.modularConversation.controlledModularConversation import controlledModularConversation #import controlled modular conversation class
 from conversationManagement.conversationTools.conversationTools import splitFileByMarker #import file splitter
 from conversationManagement.preProcessing.preProcessing import PreProcessingAgent #import pre-processing agent
 import asyncio #used to run async functions
@@ -43,7 +42,7 @@ for image_path in images:
     
     # Use only the filename as the identifier for each conversation
     image_name = os.path.basename(image_path)  # Extract the filename from the path
-    conversations[image_name] = controlledModularConversation("gpt-4o", constantPrompt, modularPrompt, controlPrompt, image_name)
+    conversations[image_name] = modularConversation("gpt-4o", constantPrompt, modularPrompt, controlPrompt, image_name)
 
 # Global variables to keep track of the current image and conversation instance
 current_image_index = 0
