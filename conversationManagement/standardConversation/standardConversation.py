@@ -10,6 +10,8 @@ from rich import print #update the print function to include more colors
 from prompt_toolkit import prompt #Used to manage inputs from the user in the chat
 from datetime import datetime #used to retrieve date
 import json #used to store messages in json files
+import logging #used to log messages
+import time #used to time api responses
 
 from conversationManagement.conversationTools.conversationTools import encodeMessage, encodeMessageInternal, getTimeStamp, makeID, removeImgInConv #tools for conversation
 from ..conversationTools import conversationErrors #error handling
@@ -146,10 +148,17 @@ class standardConversation:
         if model is None:
             model = self._model
         
-        print("\n\nrequest made using " + model + ":" + str(tempConversation)+"\n") #delicious delicios debugging statement
+        logging.info("request made using " + model + ":" + str(tempConversation)+"\n")
+
+        startTime = time.time() #start timer
+
         # output = self._client.chat.completions.create(model = model, messages = tempConversation).choices[0].message.content #request completion
         output = "omg wow the LLM talked" #yummy debug statement
-        print("response received:" + output+"\n\n") #delicious debugging statement
+
+        duration = time.time() - startTime #end timer
+        duration_str = f"{duration:.2f} seconds" #convert duration to string
+        logging.info(f"response received in {duration_str}: " + output) #log response and time
+        
         return output #return message content
             
     #Append message and potential image file to .txt file

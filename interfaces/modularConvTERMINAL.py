@@ -10,7 +10,9 @@ from rich import print #update the print function to include more colors
 from conversationManagement.modularConversation.modularConversation import modularConversation, module #import conversation class
 from conversationManagement.conversationTools.conversationTools import splitFileByMarker, encodeMessageInternal
 from datetime import datetime #used to retrieve date and time for file name
+import logging #used to log messages
 
+logging.basicConfig(level=logging.INFO) #config logging
 load_dotenv() #load the .env file
 
 #The below lines extract the prompt info from files and store them in the prompt list
@@ -21,7 +23,7 @@ with open("prompts/modularPrompt.txt", "r") as file:
 modularPrompt = splitFileByMarker("prompts/modularConversationGuide.txt", "###")
 
 controlPrompts = [] #init control prompt 
-with open("prompts/modularControllerExtrapPrompt.txt", "r") as file:
+with open("prompts/modularControllerArgumentPrompt.txt", "r") as file:
     controlPrompts.append(file.read())
 with open("prompts/moduleArgumentPrompt.txt", "r") as file:
     controlPrompts.append(file.read())

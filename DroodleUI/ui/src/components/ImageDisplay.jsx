@@ -1,10 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { Rnd } from 'react-rnd';  // Import react-rnd for drag/resize
 import '../styles/ImageDisplay.css';
-import abstractImage1 from '/Users/funckley/Documents/GitHub/TheDroodleTask/droodleExamples/droodleExample.jpg';  // First image
-import abstractImage2 from '/Users/funckley/Documents/GitHub/TheDroodleTask/droodleExamples/droodleExample2.jpg';  // Second image
-import abstractImage3 from '/Users/funckley/Documents/GitHub/TheDroodleTask/droodleExamples/droodleExample3.jpg';  // Third image
-import abstractImage4 from '/Users/funckley/Documents/GitHub/TheDroodleTask/droodleExamples/droodleExample4.jpg';  // Fourth image
+import abstractImage1 from '../../../../droodleExamples/droodleExample.jpg';  // First image
+import abstractImage2 from '../../../../droodleExamples/droodleExample2.jpg';  // Second image
+import abstractImage3 from '../../../../droodleExamples/droodleExample3.jpg';  // Third image
+import abstractImage4 from '../../../../droodleExamples/droodleExample4.jpg';  // Fourth image
 
 function ImageDisplay({ currentImageIndex, setCurrentImageIndex, onImageSwitch }) {
   const images = [abstractImage1, abstractImage2, abstractImage3, abstractImage4]; // Array of images

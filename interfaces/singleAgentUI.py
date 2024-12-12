@@ -7,13 +7,13 @@ os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) #Set the w
 from prompt_toolkit import prompt #Used to manage inputs from the user in the chat
 from dotenv import load_dotenv #used to load the .env file
 from rich import print #update the print function to include more colors
-from conversationManagement.standardConversation.standardConversation import standardConversation #import standard conversation class
+from conversationManagement.modularConversation.modularConversation import modularConversation #import standard conversation class
 from conversationManagement.conversationTools.conversationTools import splitFileByMarker #import file splitter
-from conversationManagement.preProcessing.preProcessing import PreProcessingAgent #import pre-processing agent
 import asyncio #used to run async functions
 import websockets #used to create a websocket connection
 import json #used to encode and decode json messages
 from datetime import datetime #used to retrieve date and time for file name
+import logging #used to log messages
 
 
 # Define the specific images you want to use from the directory
@@ -25,6 +25,7 @@ for img in images:
     else:
         print(f"File found: {img}")
 
+logging.basicConfig(level=logging.INFO) #config logging
 load_dotenv() #load the .env file
 
 # Initialize a conversation instance for each selected image
@@ -37,12 +38,15 @@ for image_path in images:
         
     modularPrompt = splitFileByMarker("prompts/modularConversationGuide.txt", "###")
 
-    with open("prompts/modularControllerExtrapPrompt.txt", "r") as file:
-        controlPrompt = file.read()
+    controlPrompts = [] #init control prompt
+    with open("prompts/modularControllerArgumentPrompt.txt", "r") as file:
+        controlPrompts.append(file.read())
+    with open("prompts/moduleArgumentPrompt.txt", "r") as file:
+        controlPrompts.append(file.read())
     
     # Use only the filename as the identifier for each conversation
     image_name = os.path.basename(image_path)  # Extract the filename from the path
-    conversations[image_name] = modularConversation("gpt-4o", constantPrompt, modularPrompt, controlPrompt, image_name)
+    conversations[image_name] = modularConversation("gpt-4o", constantPrompt, modularPrompt, controlPrompts, image_name)
 
 # Global variables to keep track of the current image and conversation instance
 current_image_index = 0
@@ -55,15 +59,6 @@ current_conversation = conversations[os.path.basename(current_image)]
 
 async def handler(websocket, path):
     global current_image_index, current_image, current_conversation
-    
-    # Initialize the image analyzer with the current image
-    image_analyzer = PreProcessingAgent("gpt-4o-vision", current_image)
-    image_analyzer.analyze_image()  # Extract image features
-    current_image_features = image_analyzer.get_image_features()  # Retrieve features
-
-    # Set these features in the current conversation
-    current_conversation.set_image_features(current_image_features)
-    
     while True:
         try:
             # Receive message from the frontend via WebSocket
