@@ -49,6 +49,9 @@ class standardConversation:
 
     #PUBLIC MUTATOR FUNCTIONS--------------------------------------------
 
+    def getClient(self):
+        return self._client
+    
     #**LEGACY** Main function for continuing the conversation
     def contConversation(self, newMessage: str, imagePath: str = "") -> str:
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S") #get timestamp
