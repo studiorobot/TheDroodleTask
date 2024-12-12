@@ -1,6 +1,10 @@
 from ..standardConversation.standardConversation import standardConversation #parent 
-from ..conversationTools.conversationTools import encodeMessage, encodeMessageInternal, removeImgInConv #message encoder
-from enum import Enum
+from ..conversationTools.conversationTools import encodeMessageInternal, getTimeStamp, extract_features #message encoder
+from ..conversationTools import conversationErrors #error handling
+from enum import Enum #used to define the module states
+import os #file management
+import re #used to do a better extraction from controller responses
+import logging #used to log errors and notes
 
 class module(Enum):
     PLAY  = 0
@@ -10,9 +14,7 @@ class module(Enum):
     GROUNDING = 4
     CAPTIONING = 5
     REFINING = 6
-    FEEDBACK = 7
-    SELF_EVALUATION = 8
-    AIDING = 9
+    AIDING = 7
 
     #Functions that check the attributes of each state
     def isDivergent(self) -> bool:
@@ -22,115 +24,241 @@ class module(Enum):
         return self in {module.GROUNDING, module.CAPTIONING, module.REFINING}
     
     def isAny(self) -> bool:
-        return self in {module.FEEDBACK, module.SELF_EVALUATION, module.AIDING}
-    
-    #Get the list of neccessary before states to get to this module
-    def prerequisites(self) -> list['module']:
-        if (self == module.PLAY) or (self == module.TARGETED_OBSERVATION) or (self == module.AIDING):
-            return list(module.__members__.values()) #list of all possible enums
-        elif self == module.STIMULATION:
-            return {module.STIMULATION, module.TARGETED_OBSERVATION}
-        elif self == module.REFORMING:
-            return {module.REFORMING, module.TARGETED_OBSERVATION, module.CAPTIONING}
-        elif self == module.GROUNDING:
-            return {module.GROUNDING, module.REFORMING}
-        elif self == module.CAPTIONING:
-            return {module.CAPTIONING, module.GROUNDING}
-        elif self == module.REFINING:
-            return {module.REFINING, module.CAPTIONING}
-        elif self == module.FEEDBACK:
-            return {module.FEEDBACK, module.REFINING, module.CAPTIONING}
-        elif self == module.SELF_EVALUATION:
-            return {module.SELF_EVALUATION, module.REFINING, module.CAPTIONING}
-        else:
-            assert(False)
-
+        return self == module.AIDING
 
 class modularConversation(standardConversation):
-    def __init__(self, model: str, constantPrompt: list[str], modulePrompts: list[str], conversationName: str, savePath: str = 'conversationArchive'):
+    def __init__(self, model: str, constantPrompt: list[str], modulePrompts: list[str], controlPrompts: list[str], conversationName: str, savePath: str = 'conversationArchive', imageFeatures: str = "", lowerModel: str = "gpt-4o mini"):
+        #Make some invariant assertions
+        if len(modulePrompts) != len(module):
+            raise conversationErrors.ImproperPromptFormatError("Module prompts must be equal to the number of modules")
+        if len(controlPrompts) != 2:
+            raise conversationErrors.ImproperPromptFormatError("Control prompts must be of length 2")
+        if len(constantPrompt) <= 0:
+            raise conversationErrors.InvalidInitVariableError("Constant prompts must have at least one prompt")
+        
+        #new directory for the modular conversation
+        savePath = savePath+"/modularConversation - "+conversationName
+
+        #Create the save path if it does not exist
+        if not os.path.exists(savePath):
+            os.mkdir(savePath)
+
+        #Init parent class
         super().__init__(model = model, prompts = constantPrompt + modulePrompts, conversationName = conversationName, savePath = savePath)
         
         self._constantPrompt = constantPrompt #prompts that hold true always
         self._modulePrompts = modulePrompts #prompts that switch out
         self._state = module(0) #the mode the chatbot is in, starts in the play mode
+        self._lowerModel = lowerModel #model used low level decision making
         self._history = dict() #history of the used modules, used to limit possible steps
-        self.addHistory(module(0), 0)
-        self._historyLimit = 7 #limit of the history for module limitations
+        self._image_features = imageFeatures  # Pre-processed image features, if provided
+        self._current_image = "" #current image path
+        self._recordHistory()
 
+        #Create CONTROL agent
+        self._controller = standardConversation(model, [controlPrompts[0]], conversationName + " - CONTROLLER", savePath)
+        
+        # Create SPEAKING agents for each module
+        self._speaking_agents = []
+        for indevModule in self.allModules():
+            agent_name = conversationName + " - " + indevModule.name #name
+            
+            #prompts for the agent
+            agent_prompt = []
+            for prompt in self._constantPrompt:
+                agent_prompt.append(prompt)
+            agent_prompt.append(self._modulePrompts[indevModule.value])
 
-    #returns a list of all modules
+            #make and add the agent
+            agent = standardConversation(model, agent_prompt, agent_name, savePath)
+            self._speaking_agents.append(agent)
+
+        # Create ARGUMENT agents for each module
+        self._argument_agents = []
+        for indevModule in self.allModules():
+            agent_name = conversationName + " - " + indevModule.name
+            agent_prompt = [controlPrompts[1], modulePrompts[indevModule.value]]
+            agent = standardConversation(lowerModel, agent_prompt, agent_name, savePath)
+            self._argument_agents.append(agent)
+    
+    #DECISION MAKING--------------------------------------------------------
+
+    #Get the arguments for each module, speaking to each argument agent
+    def get_module_arguments(self, modules: list[module]) -> list[dict]:
+        #make a message containing the last two messages from the conversation
+        formattedMessage = encodeMessageInternal(self._getLastMessages(2), getTimeStamp(), "user", "LLM")
+        outputMessages = []
+
+        #Call each agent to get their argument
+        for agent in self._argument_agents:
+            message = agent.contConversationDict(formattedMessage)
+            outputMessages.append(message)
+        return outputMessages
+
+    # Gets given module to talk
+    def makeModuleSpeak(self, module_in: module) -> dict:
+        #Get new messages since module last spoke
+        lastModuleIndex = self._getLastModuleIndex(module_in)
+        if lastModuleIndex == -1: #if no history, get all messages
+            lastMessages = self._getLastMessages()
+        else: #if history, get messages from when last spoke
+            lastMessages = self._getLastMessages(self.getIndex()-lastModuleIndex)
+
+        #Make request to module speaking agent
+        agent = self._speaking_agents[module_in.value]
+        agent.cleanOutImages() #remove images from the conversation
+        message = encodeMessageInternal(lastMessages, getTimeStamp(), "user", "LLM", image= self._current_image)
+        return agent.contConversationDict(message)
+    
+    #Retrive the controller given by the index and get their decision
+    def decideSwitch(self) -> module:
+        #Get the chat history
+        message = self.getConversationStr()
+
+        #make and append the arguments
+        #Add marker
+        message = message + "Examples:\n"
+
+        #get arguments
+        possibleModules = self.allModules()
+        arguments = self.get_module_arguments(possibleModules)
+
+        #put all the arguments in one string
+        argumentStr = ""
+        for i in range(len(possibleModules)):
+            possibleMessage = arguments[i]
+            indevModule = possibleModules[i]
+            argumentStr = argumentStr + "Assistant - " + indevModule.name + "(" + str(indevModule.value) + ")> "+possibleMessage.get("content")+"\n"
+
+        #append arguments
+        message = message + "\n\n" + argumentStr
+        
+        #Package the new message
+        messageDict = encodeMessageInternal(message, "", "user", "Controller")
+        
+        #make the request
+        reply = self._controller.contConversationDict(messageDict).get("content")
+
+        return self._extract_module(reply)
+    
+    #CONVERSATION MANAGEMENT------------------------------------------------
+
+    #Adding history management into the insertMessage method
+    def insertMessageDict(self, newMessage: dict):
+        #Update the image features if new image present
+        if newMessage.get("image_path") != "":
+            self.set_current_image(newMessage.get("image_path"))
+
+        #Add the module name to the note
+        if newMessage.get("role") == "assistant":
+            newMessage["note"] = self._state.name
+        super().insertMessageDict(newMessage)
+        self._recordHistory() #add the history in
+    
+    #Main function for continuing the conversation using a message dict object
+    def contConversationDict(self, newMessage: dict) -> dict:
+        self.insertMessageDict(newMessage) #Add new message
+        self._switchStateUnbounded() #Switch the state
+        outMessage = self.turnoverConversationDict()
+        return outMessage
+    
+    #Get a response from the LLM and store it without a human input, modified to use multiple agents
+    def turnoverConversationDict(self) -> dict:
+        return self.makeModuleSpeak(self.getState()) #make the module speak
+
+    #Update the current image
+    def set_current_image(self, image_path: str):
+        self._current_image = image_path
+        self._image_features = extract_features(self._client, "gpt-4o", image_path)
+
+    #Add a new entry into the module history
+    def _recordHistory(self):
+        #get the current module and index
+        current_module = self.getState()
+        index = self.getIndex()
+
+        #if module not in history, add a new list
+        if self._history.get(current_module, False) == False:
+            self._history[current_module] = [index]
+        else: #if module is in history, add new entry to list
+            self._history[current_module].append(index)
+
+    #Get the last index of a module's use in the history
+    def _getLastModuleIndex(self, module_in: module) -> int:
+        if self._history.get(module_in, False) == False:
+            return -1
+        else:
+            return self._history[module_in][-1]
+
+    #switches the state to another module
+    def _switchStateUnbounded(self) -> bool:
+        #Try to get state to switch to
+        try:
+            toModule = self.decideSwitch()
+        except conversationErrors.moduleExtractError or conversationErrors.SwitchOutOfBoundsError:
+            logging.warning("Error in switching state, keeping current state")
+            return False
+        
+        #Switch the state
+        self._state = toModule
+        logging.info("Switched to module: "+toModule.name)
+        return True
+    
+    def makeConversationSave(self):
+        # make the new directory one level higher than the save path
+        parent_save_path = os.path.dirname(self._savePath)
+        savePath = os.path.join(parent_save_path, "modularConversation - " + self._conversationName + self._idNumber)
+        os.mkdir(savePath)
+
+        # Save the core conversation
+        super().makeConversationSave(savePath)
+
+        # Save the controller
+        self._controller.makeConversationSave(savePath)
+
+        # Save the speaking agents
+        for agent in self._speaking_agents:
+            agent.makeConversationSave(savePath)
+    
+    #HELPERS---------------------------------------------------------------
+    
+    #Helper function to get the last two messages as a string
+    def _getLastMessages(self, number: int = None) -> str:
+        #get the last messages (or one if there is only one)
+        if len(self._conversationInternal) < number or number == None:
+            lastMessages = self._conversationInternal
+        else:
+            lastMessages = self._conversationInternal[-number:]
+        
+        #Format the output
+        output = ""
+        for message in lastMessages:
+            output = output + message.get("role")
+            output = output + "> "
+            output = output + message.get("content") + "\n"
+        return output
+    
+    def _extract_module(self, reply: str):
+        match = re.search(r'\d+', reply)
+        if not match:
+            #No number in the response
+            raise conversationErrors.moduleExtractError("No digits found in message to determine the module.")
+        elif int(match.group()) > len(module) or int(match.group()) < 0:
+            #Number out of bounds
+            raise conversationErrors.SwitchOutOfBoundsError("Module out of bounds")
+        else:
+            return module(int(match.group()))
+    
+    #ACCESSORS--------------------------------------------------------------
+    
+    #Helper function that returns a list of all modules
     def allModules(self) -> list['module']:
         return list(module.__members__.values())
     
-    #Check if switching into the proposed module is possible
-    def checkRecommendedSwitch(self, toModule: module) -> bool:
-        #get list of prerequisites
-        prereq = toModule.prerequisites()
-        curentIndex = len(self._conversationInternal)
-        moduleHistory = self._history.get(toModule, [])
-
-        for indevModule in prereq: #loop through all prerequistes
-            if moduleHistory != [] and (max(moduleHistory) - curentIndex) < self._historyLimit: #check if prerequisite is met
-                return True
-        return False #if no prerequisites met
-    
-    #attempts to switch the state to another module, returns true if successful
-    def switchStateBounded(self, toModule: module) -> bool:
-        if not self.checkRecommendedSwitch(toModule):
-            return False
-        
-        self._state = toModule
-
-    #switches the state to another module without checking prerequisites
-    def switchStateUnbounded(self, toModule: module) -> bool:
-        self._state = toModule
-
-    #generates a list of all the possible next modules
-    def recommendedNextStates(self) -> list[module]:
-        possibleModules = []
-        for indevModule in module:
-            if self.checkRecommendedSwitch(indevModule):
-                possibleModules.append(indevModule)
-        return possibleModules
-    
-    # Generates a list of next messages for given modules
-    def extrapolate(self, modules: list[module]) -> list[dict]:
-        possibleMessages = []
-        for indevModule in modules:
-            # Prepare prompts without the image path
-            formattedPrompts = self._prepPrompts(self._constantPrompt + [self._modulePrompts[indevModule.value]])
-            conversation = formattedPrompts + removeImgInConv(self._conversation)  # Remove image from conversation
-            
-            # Generate response without vision processing
-            message = self._makeRequest(tempConversation=conversation, model="gpt-4o-mini")
-            
-            # Encode message with module name but without image
-            encodedMessage = encodeMessageInternal(message, "", "assistant-theoretical", "LLM", note=indevModule.name)
-            possibleMessages.append(encodedMessage)
-        return possibleMessages
-    
-    #Add a new entry into the module history
-    def addHistory(self, newModule: module, index: int):
-        #if module not in history, add a new list
-        if self._history.get(newModule, False) == False:
-            self._history[newModule] = [index]
-        else: #if module is in history, add new entry to list
-            self._history[newModule].append(index)
-
     #get the state of the chatbot
     def getState(self) -> module:
         return self._state
     
-    #Adding history management into the insertMessage method
-    def insertMessageDict(self, newMessage: dict):
-        if newMessage.get("role") == "assistant":
-            newMessage["note"] = self._state.name
-        super().insertMessageDict(newMessage)
-        self.addHistory(self._state, len(self._conversationInternal)) #add the history in
-
-    #Prep the propmts for completion
-    def _prepPrompts(self, prompts: list[str] = None) -> list[dict]:
-        #if not overridden by entry value, assemble appropriate modular and constant prompts into list
-        if prompts is None:
-            prompts = self._constantPrompt + [self._modulePrompts[self._state.value]]
-        return super()._prepPrompts(prompts) #make super do the rest
+    #get the index of the conversation
+    def getIndex(self) -> int:
+        return len(self._conversationInternal)-1

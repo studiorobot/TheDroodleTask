@@ -1,4 +1,6 @@
 import base64 #used to turn image files into useable data for the api
+from datetime import datetime #used to retrieve date and time for file name
+from openai import OpenAI #openai api
 
 #Encode a message, role, and potential image into a dictionary object
 def encodeMessage(textMessage: str, role: str, imagePath: str = ""):
@@ -55,3 +57,35 @@ def removeImgInConv(conversation: list[dict]) -> list[dict]:
         #append the message with the tex only to the new conversation
         new_conversation.append(encodeMessage(message_content, role))
     return new_conversation
+
+#Get a standard formatting for the timestamp
+def getTimeStamp() -> str:
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S") #get timestamp
+
+#creates an 8-digit ID number based on when the documet was saved
+def makeID() -> str:
+    return datetime.now().strftime("%m%d")+"-"+datetime.now().strftime("%H%M")
+
+#Use the client to make a request to make a request to the chat model 
+#that extracts image features
+def extract_features(client: OpenAI, model: str, image_path: str) -> str:
+    # Define the vision prompt
+    vision_prompt = (
+        "Please analyze the image and identify abstract objects. "
+        "Do NOT mention literal objects like cars, trees, or people. "
+        "Instead, describe abstract elements such as lines, shapes, clusters and how they are positioned with respect to each other etc."
+    )
+
+    #Create the message
+    encoded_prompt = encodeMessage(vision_prompt, "system")
+    encoded_image = encodeMessage("", "user", image_path)
+
+    # Send the request using the OpenAI client
+    response = client.chat.completions.create(
+        model=model,
+        messages=[encoded_prompt, encoded_image]
+    )
+
+    # Extract the content from the response
+    self.features = response.choices[0].message.content.strip()
+    return self.features

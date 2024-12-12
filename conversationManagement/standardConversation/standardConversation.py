@@ -10,26 +10,38 @@ from rich import print #update the print function to include more colors
 from prompt_toolkit import prompt #Used to manage inputs from the user in the chat
 from datetime import datetime #used to retrieve date
 import json #used to store messages in json files
+import logging #used to log messages
+import time #used to time api responses
 
-from conversationManagement.conversationTools.conversationTools import encodeMessage, encodeMessageInternal #message encoders
+from conversationManagement.conversationTools.conversationTools import encodeMessage, encodeMessageInternal, getTimeStamp, makeID, removeImgInConv #tools for conversation
+from ..conversationTools import conversationErrors #error handling
 
 class standardConversation:
 
     def __init__(self, model: str, prompts: list[str], conversationName: str, savePath: str = 'conversationArchive'):
+        #Make some invariant assertions
+        if not isinstance(prompts, list):
+            raise conversationErrors.ImproperPromptFormatError("Prompts must be in a list")
+        if not isinstance(conversationName, str):
+            raise conversationErrors.InvalidInitVariableError("Conversation name must be a string")
+        
         #define instance variables from function call
         self._model = model
         self._prompts = prompts
         self._conversationName = conversationName
+        self._idNumber = makeID()
         self._savePath = savePath
-        self._tempFilePath = "./" + savePath + "/" + conversationName + "LastConversation.json"
+        self._tempFilePath = "./" + savePath + "/" + conversationName + " - temp.json"
         self._conversation = [] #important conversation variable for openAI
         self._conversationInternal = [] #conversation variable for our storage
 
         #Assert staments to check init variables
-        assert os.path.exists(savePath), "Invalid path given (create a conversationArchive folder in the root directory)"
+        if not os.path.exists(savePath):
+            raise conversationErrors.StorageFolderNotFoundError("Invalid save path given (create a conversationArchive folder in the root directory)")
 
         #define and extract instance variables from .env file
-        load_dotenv()
+        if not load_dotenv():
+            raise conversationErrors.InvalidEnvError("Invalid .env file")
         self._usingUmichApi = os.getenv("USING_UMICH_API").lower() in ('true', '1', 't')
 
         #If the client requires the umich API to be used, access it that way. Otherwise, open the standard openAI API
@@ -51,7 +63,7 @@ class standardConversation:
 
     #**LEGACY** Main function for continuing the conversation
     def contConversation(self, newMessage: str, imagePath: str = "") -> str:
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S") #get timestamp
+        timestamp = getTimeStamp() #get timestamp
         message = encodeMessageInternal(newMessage, timestamp, "user", "LLM", image = imagePath) #package message
         outputMessage = self.contConversationDict(message)
         return outputMessage.get("content")
@@ -68,7 +80,7 @@ class standardConversation:
         lastMessage = self._conversationInternal[-1]
 
         outputMessageText = self._makeRequest() #Make request to chat model
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S") #get timestamp
+        timestamp = getTimeStamp() #get timestamp
         sessionNumber = lastMessage.get("session_number") #get session number
         assistantType = lastMessage.get("assistant_type")
         outputMessage = encodeMessageInternal(outputMessageText, timestamp, "assistant", assistantType, sessionNumber = sessionNumber) #package message
@@ -79,7 +91,7 @@ class standardConversation:
     #**LEGACY** Insert a message into the conversation variable and file
     def insertMessage(self, newMessage: str, role: str, imagePath: str = "", note: str = ""):
         assert role in ("user", "assistant", "system"), "Invalid role given"
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S") #get timestamp
+        timestamp = getTimeStamp() #get timestamp
         message = encodeMessageInternal(newMessage, timestamp, role, "LLM", image = imagePath, note = note)
         self.insertMessageDict(message)
 
@@ -94,11 +106,17 @@ class standardConversation:
         self._updateSave() #Update conversation File
 
     #Make a permanent save for the current conversation
-    def makeConversationSave(self):
-        idNumber = datetime.now().strftime("%m%d")+"-"+datetime.now().strftime("%H%M") #creates an 8-digit ID number based on when the documet was saved
-        permFilePath = self._savePath + "/" + self._conversationName + idNumber + ".json" #generate perm storage name
+    def makeConversationSave(self, permFilePath: str = None):
+        if permFilePath is None:
+            permFilePath = self._savePath
+        permFilePath = permFilePath + "/" + self._conversationName + self._idNumber + ".json" #generate perm storage name
         with open(permFilePath, "w") as file: #save the file
             json.dump(self._conversationInternal, file, indent = 4)
+
+    def cleanOutImages(self):
+        self._conversation = removeImgInConv(self._conversation)
+        for message in self._conversationInternal:
+            message["image_path"] = ""
 
 
     #PUBLIC ACCESSOR FUNCTIONS--------------------------------------------
@@ -110,8 +128,6 @@ class standardConversation:
         output = ""
         for message in self._conversationInternal:
             output = output + message.get("role")
-            if message.get("note") != "":
-                output = output + " (" + message.get("note") + ")"
             output = output + "> "
             output = output + message.get("content") + "\n"
         return output
@@ -132,12 +148,19 @@ class standardConversation:
         if model is None:
             model = self._model
         
-        print("\n\nrequest made using:" + str(tempConversation)+"\n\n") #delicious delicios debugging statement
-        output = self._client.chat.completions.create(model = model, messages = tempConversation) #request completion
-        return output.choices[0].message.content #return message content
+        logging.info("request made using " + model + ":" + str(tempConversation)+"\n")
 
-        # return "omg wow the LLM talked" #yummy debug statement
+        startTime = time.time() #start timer
+
+        # output = self._client.chat.completions.create(model = model, messages = tempConversation).choices[0].message.content #request completion
+        output = "omg wow the LLM talked" #yummy debug statement
+
+        duration = time.time() - startTime #end timer
+        duration_str = f"{duration:.2f} seconds" #convert duration to string
+        logging.info(f"response received in {duration_str}: " + output) #log response and time
         
+        return output #return message content
+            
     #Append message and potential image file to .txt file
     def _updateSave(self):
         with open(self._tempFilePath, "w") as file:

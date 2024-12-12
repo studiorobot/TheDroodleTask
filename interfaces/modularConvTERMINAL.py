@@ -8,14 +8,12 @@ from prompt_toolkit import prompt #Used to manage inputs from the user in the ch
 from dotenv import load_dotenv #used to load the .env file
 from rich import print #update the print function to include more colors
 from conversationManagement.modularConversation.modularConversation import modularConversation, module #import conversation class
-from conversationManagement.modularConversation.controlledModularConversation import controlledModularConversation
 from conversationManagement.conversationTools.conversationTools import splitFileByMarker, encodeMessageInternal
 from datetime import datetime #used to retrieve date and time for file name
+import logging #used to log messages
 
+logging.basicConfig(level=logging.INFO) #config logging
 load_dotenv() #load the .env file
-
-#Select the propt and conversationGuide Files
-conversationGuideFile = "prompts/conversationGuideExpert.txt"
 
 #The below lines extract the prompt info from files and store them in the prompt list
 constantPrompt = [] #init constant prompt
@@ -24,16 +22,22 @@ with open("prompts/modularPrompt.txt", "r") as file:
     
 modularPrompt = splitFileByMarker("prompts/modularConversationGuide.txt", "###")
 
-with open("prompts/modularControllerPrompt.txt", "r") as file:
-    controlPrompt = file.read()
-with open("prompts/modularControllerExtrapPrompt.txt", "r") as file:
-    controlPrompt = file.read()
+controlPrompts = [] #init control prompt 
+with open("prompts/modularControllerArgumentPrompt.txt", "r") as file:
+    controlPrompts.append(file.read())
+with open("prompts/moduleArgumentPrompt.txt", "r") as file:
+    controlPrompts.append(file.read())
 
-#control types
-controlTypes = ["no extrapolation", "extrapolation"]
 
 #Init the conversation variable
-conv = controlledModularConversation("gpt-4o", constantPrompt, modularPrompt, controlPrompt, "modularConv")
+conv = modularConversation("gpt-4o", constantPrompt, modularPrompt, controlPrompts, "terminal")
+
+#Add the intial message
+initial_message_str = "Hello! I’m your AI guide for building a doodle caption. I’m designed to ask you questions and guide your reasoning but if you want to take control of your own creative process, I’ll be happy to help wherever possible."
+timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S") #get timestamp
+initial_message = encodeMessageInternal(initial_message_str, timestamp, "assistant", "LLM")
+conv.insertMessageDict(initial_message)
+print("\n[blue]Assistant - init(N/A)> "+initial_message_str+"[/blue]")
 
 #prompt the user to input an image path and return the path string. If image path does not exist, prompt again
 def promptImage() -> str:
