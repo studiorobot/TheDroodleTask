@@ -10,12 +10,12 @@ from rich import print #update the print function to include more colors
 from conversationManagement.standardConversation.standardConversation import standardConversation #import standard conversation class
 from conversationManagement.modularConversation.controlledModularConversation import controlledModularConversation #import controlled modular conversation class
 from conversationManagement.conversationTools.conversationTools import splitFileByMarker #import file splitter
-from conversationManagement.featureExtraction.featureExtractor import featureExtractor #import feature extractor
+from conversationManagement.preProcessing.preProcessing import PreProcessingAgent #import pre-processing agent
 import asyncio #used to run async functions
 import websockets #used to create a websocket connection
 import json #used to encode and decode json messages
 from datetime import datetime #used to retrieve date and time for file name
-from openai import OpenAI #GPT resources
+
 
 # Define the specific images you want to use from the directory
 images = ["droodleExamples/droodleExample.jpg", "droodleExamples/droodleExample2.jpg", "droodleExamples/droodleExample3.jpg", "droodleExamples/droodleExample4.jpg"]
@@ -27,29 +27,14 @@ for img in images:
         print(f"File found: {img}")
 
 load_dotenv() #load the .env file
-client = OpenAI() #initialize the OpenAI client
+
 # Initialize a conversation instance for each selected image
 conversations = {}
 for image_path in images:
-    # Initialize the featureExtractor for the image
-    feature_extractor = featureExtractor("gpt-4o", image_path, client)
-
-    try:
-        # Extract the features from the image
-        extracted_features = feature_extractor.extract_features(client)
-        print(f"Extracted features for {image_path}: {extracted_features}")
-    except Exception as e:
-        print(f"Failed to extract features for {image_path}: {e}")
-        extracted_features = ""
-
     #The below lines extract the prompt info from files and store them in the prompt list
     constantPrompt = [] #init constant prompt
     with open("prompts/modularPrompt.txt", "r") as file:
         constantPrompt.append(file.read())
-
-    # Augment the constant prompt with the extracted features
-    if extracted_features:
-        constantPrompt[0] = feature_extractor.augment_constant_prompt(constantPrompt[0])
         
     modularPrompt = splitFileByMarker("prompts/modularConversationGuide.txt", "###")
 
@@ -59,17 +44,6 @@ for image_path in images:
     # Use only the filename as the identifier for each conversation
     image_name = os.path.basename(image_path)  # Extract the filename from the path
     conversations[image_name] = controlledModularConversation("gpt-4o", constantPrompt, modularPrompt, controlPrompt, image_name)
-    # conversation = controlledModularConversation(
-    #     "gpt-4o", constantPrompt, modularPrompt, controlPrompt, image_name
-    # )
-
-    # Use the conversation's client for feature extraction
-    # feature_extractor = featureExtractor(
-    #     "gpt-4o",
-    #     image_path,
-    #     conversation.getClient()  # Reuse the client from the conversation instance
-    # )
-
 
 # Global variables to keep track of the current image and conversation instance
 current_image_index = 0
@@ -82,6 +56,14 @@ current_conversation = conversations[os.path.basename(current_image)]
 
 async def handler(websocket, path):
     global current_image_index, current_image, current_conversation
+    
+    # Initialize the image analyzer with the current image
+    image_analyzer = PreProcessingAgent("gpt-4o-vision", current_image)
+    image_analyzer.analyze_image()  # Extract image features
+    current_image_features = image_analyzer.get_image_features()  # Retrieve features
+
+    # Set these features in the current conversation
+    current_conversation.set_image_features(current_image_features)
     
     while True:
         try:
