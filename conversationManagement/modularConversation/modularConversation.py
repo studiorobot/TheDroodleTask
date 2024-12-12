@@ -1,5 +1,5 @@
 from ..standardConversation.standardConversation import standardConversation #parent 
-from ..conversationTools.conversationTools import encodeMessage, encodeMessageInternal, removeImgInConv, getTimeStamp #message encoder
+from ..conversationTools.conversationTools import encodeMessageInternal, getTimeStamp, extract_features #message encoder
 from ..conversationTools import conversationErrors #error handling
 from enum import Enum #used to define the module states
 import os #file management
@@ -26,9 +26,8 @@ class module(Enum):
     def isAny(self) -> bool:
         return self == module.AIDING
 
-
 class modularConversation(standardConversation):
-    def __init__(self, model: str, constantPrompt: list[str], modulePrompts: list[str], controlPrompts: list[str], conversationName: str, savePath: str = 'conversationArchive', imageFeatures=None):
+    def __init__(self, model: str, constantPrompt: list[str], modulePrompts: list[str], controlPrompts: list[str], conversationName: str, savePath: str = 'conversationArchive', imageFeatures: str = "", lowerModel: str = "gpt-4o mini"):
         #Make some invariant assertions
         if len(modulePrompts) != len(module):
             raise conversationErrors.ImproperPromptFormatError("Module prompts must be equal to the number of modules")
@@ -37,9 +36,12 @@ class modularConversation(standardConversation):
         if len(constantPrompt) <= 0:
             raise conversationErrors.InvalidInitVariableError("Constant prompts must have at least one prompt")
         
-        #make the new directory for the modular conversation
+        #new directory for the modular conversation
         savePath = savePath+"/modularConversation - "+conversationName
-        os.mkdir(savePath)
+
+        #Create the save path if it does not exist
+        if not os.path.exists(savePath):
+            os.mkdir(savePath)
 
         #Init parent class
         super().__init__(model = model, prompts = constantPrompt + modulePrompts, conversationName = conversationName, savePath = savePath)
@@ -47,12 +49,14 @@ class modularConversation(standardConversation):
         self._constantPrompt = constantPrompt #prompts that hold true always
         self._modulePrompts = modulePrompts #prompts that switch out
         self._state = module(0) #the mode the chatbot is in, starts in the play mode
+        self._lowerModel = lowerModel #model used low level decision making
         self._history = dict() #history of the used modules, used to limit possible steps
-        self.image_features = imageFeatures  # Pre-processed image features, if provided
+        self._image_features = imageFeatures  # Pre-processed image features, if provided
+        self._current_image = "" #current image path
         self._recordHistory()
 
         #Create CONTROL agent
-        self._controller = standardConversation(model, [controlPrompts[0]], conversationName + " - Controller", savePath)
+        self._controller = standardConversation(model, [controlPrompts[0]], conversationName + " - CONTROLLER", savePath)
         
         # Create SPEAKING agents for each module
         self._speaking_agents = []
@@ -74,7 +78,7 @@ class modularConversation(standardConversation):
         for indevModule in self.allModules():
             agent_name = conversationName + " - " + indevModule.name
             agent_prompt = [controlPrompts[1], modulePrompts[indevModule.value]]
-            agent = standardConversation(model, agent_prompt, agent_name, savePath)
+            agent = standardConversation(lowerModel, agent_prompt, agent_name, savePath)
             self._argument_agents.append(agent)
     
     #DECISION MAKING--------------------------------------------------------
@@ -99,10 +103,11 @@ class modularConversation(standardConversation):
             lastMessages = self._getLastMessages()
         else: #if history, get messages from when last spoke
             lastMessages = self._getLastMessages(self.getIndex()-lastModuleIndex)
-        
+
         #Make request to module speaking agent
         agent = self._speaking_agents[module_in.value]
-        message = encodeMessageInternal(lastMessages, getTimeStamp(), "user", "LLM")
+        agent.cleanOutImages() #remove images from the conversation
+        message = encodeMessageInternal(lastMessages, getTimeStamp(), "user", "LLM", image= self._current_image)
         return agent.contConversationDict(message)
     
     #Retrive the controller given by the index and get their decision
@@ -140,6 +145,11 @@ class modularConversation(standardConversation):
 
     #Adding history management into the insertMessage method
     def insertMessageDict(self, newMessage: dict):
+        #Update the image features if new image present
+        if newMessage.get("image_path") != "":
+            self.set_current_image(newMessage.get("image_path"))
+
+        #Add the module name to the note
         if newMessage.get("role") == "assistant":
             newMessage["note"] = self._state.name
         super().insertMessageDict(newMessage)
@@ -155,14 +165,11 @@ class modularConversation(standardConversation):
     #Get a response from the LLM and store it without a human input, modified to use multiple agents
     def turnoverConversationDict(self) -> dict:
         return self.makeModuleSpeak(self.getState()) #make the module speak
-    
-    #Update the image features
-    def set_image_features(self, image_features):
-        self.image_features = image_features  # Update features as needed
 
     #Update the current image
-    def set_current_image(self, image_path):
-        self.current_image = image_path
+    def set_current_image(self, image_path: str):
+        self._current_image = image_path
+        self._image_features = extract_features(self._client, "gpt-4o", image_path)
 
     #Add a new entry into the module history
     def _recordHistory(self):
@@ -176,6 +183,7 @@ class modularConversation(standardConversation):
         else: #if module is in history, add new entry to list
             self._history[current_module].append(index)
 
+    #Get the last index of a module's use in the history
     def _getLastModuleIndex(self, module_in: module) -> int:
         if self._history.get(module_in, False) == False:
             return -1
@@ -196,6 +204,22 @@ class modularConversation(standardConversation):
         logging.info("Switched to module: "+toModule.name)
         return True
     
+    def makeConversationSave(self):
+        # make the new directory one level higher than the save path
+        parent_save_path = os.path.dirname(self._savePath)
+        savePath = os.path.join(parent_save_path, "modularConversation - " + self._conversationName + self._idNumber)
+        os.mkdir(savePath)
+
+        # Save the core conversation
+        super().makeConversationSave(savePath)
+
+        # Save the controller
+        self._controller.makeConversationSave(savePath)
+
+        # Save the speaking agents
+        for agent in self._speaking_agents:
+            agent.makeConversationSave(savePath)
+    
     #HELPERS---------------------------------------------------------------
     
     #Helper function to get the last two messages as a string
@@ -214,7 +238,7 @@ class modularConversation(standardConversation):
             output = output + message.get("content") + "\n"
         return output
     
-    def _extract_module(reply: str):
+    def _extract_module(self, reply: str):
         match = re.search(r'\d+', reply)
         if not match:
             #No number in the response

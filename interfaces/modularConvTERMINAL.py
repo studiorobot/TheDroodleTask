@@ -28,7 +28,7 @@ with open("prompts/moduleArgumentPrompt.txt", "r") as file:
 
 
 #Init the conversation variable
-conv = modularConversation("gpt-4o", constantPrompt, modularPrompt, controlPrompts, "modularConv")
+conv = modularConversation("gpt-4o", constantPrompt, modularPrompt, controlPrompts, "terminal")
 
 #Add the intial message
 initial_message_str = "Hello! I’m your AI guide for building a doodle caption. I’m designed to ask you questions and guide your reasoning but if you want to take control of your own creative process, I’ll be happy to help wherever possible."

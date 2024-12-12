@@ -11,7 +11,7 @@ from prompt_toolkit import prompt #Used to manage inputs from the user in the ch
 from datetime import datetime #used to retrieve date
 import json #used to store messages in json files
 
-from conversationManagement.conversationTools.conversationTools import encodeMessage, encodeMessageInternal, getTimeStamp #message encoders
+from conversationManagement.conversationTools.conversationTools import encodeMessage, encodeMessageInternal, getTimeStamp, makeID, removeImgInConv #tools for conversation
 from ..conversationTools import conversationErrors #error handling
 
 class standardConversation:
@@ -27,8 +27,9 @@ class standardConversation:
         self._model = model
         self._prompts = prompts
         self._conversationName = conversationName
+        self._idNumber = makeID()
         self._savePath = savePath
-        self._tempFilePath = "./" + savePath + "/" + conversationName + "LastConversation.json"
+        self._tempFilePath = "./" + savePath + "/" + conversationName + " - temp.json"
         self._conversation = [] #important conversation variable for openAI
         self._conversationInternal = [] #conversation variable for our storage
 
@@ -103,11 +104,17 @@ class standardConversation:
         self._updateSave() #Update conversation File
 
     #Make a permanent save for the current conversation
-    def makeConversationSave(self):
-        idNumber = datetime.now().strftime("%m%d")+"-"+datetime.now().strftime("%H%M") #creates an 8-digit ID number based on when the documet was saved
-        permFilePath = self._savePath + "/" + self._conversationName + idNumber + ".json" #generate perm storage name
+    def makeConversationSave(self, permFilePath: str = None):
+        if permFilePath is None:
+            permFilePath = self._savePath
+        permFilePath = permFilePath + "/" + self._conversationName + self._idNumber + ".json" #generate perm storage name
         with open(permFilePath, "w") as file: #save the file
             json.dump(self._conversationInternal, file, indent = 4)
+
+    def cleanOutImages(self):
+        self._conversation = removeImgInConv(self._conversation)
+        for message in self._conversationInternal:
+            message["image_path"] = ""
 
 
     #PUBLIC ACCESSOR FUNCTIONS--------------------------------------------
@@ -139,13 +146,12 @@ class standardConversation:
         if model is None:
             model = self._model
         
-        print("\n\nrequest made using:" + str(tempConversation)+"\n") #delicious delicios debugging statement
-        output = self._client.chat.completions.create(model = model, messages = tempConversation) #request completion
-        print("response received:" + output.choices[0].message.content+"\n\n") #delicious debugging statement
-        return output.choices[0].message.content #return message content
-
-        # return "omg wow the LLM talked" #yummy debug statement
-        
+        print("\n\nrequest made using " + model + ":" + str(tempConversation)+"\n") #delicious delicios debugging statement
+        # output = self._client.chat.completions.create(model = model, messages = tempConversation).choices[0].message.content #request completion
+        output = "omg wow the LLM talked" #yummy debug statement
+        print("response received:" + output+"\n\n") #delicious debugging statement
+        return output #return message content
+            
     #Append message and potential image file to .txt file
     def _updateSave(self):
         with open(self._tempFilePath, "w") as file:
