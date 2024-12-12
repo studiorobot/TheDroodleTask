@@ -86,6 +86,4 @@ def extract_features(client: OpenAI, model: str, image_path: str) -> str:
         messages=[encoded_prompt, encoded_image]
     )
 
-    # Extract the content from the response
-    self.features = response.choices[0].message.content.strip()
-    return self.features
+    return response.choices[0].message.content.strip()

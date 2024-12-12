@@ -27,7 +27,7 @@ class module(Enum):
         return self == module.AIDING
 
 class modularConversation(standardConversation):
-    def __init__(self, model: str, constantPrompt: list[str], modulePrompts: list[str], controlPrompts: list[str], conversationName: str, savePath: str = 'conversationArchive', imageFeatures: str = "", lowerModel: str = "gpt-4o mini"):
+    def __init__(self, model: str, constantPrompt: list[str], modulePrompts: list[str], controlPrompts: list[str], conversationName: str, savePath: str = 'conversationArchive', imageFeatures: str = "", lowerModel: str = "gpt-4o-mini"):
         #Make some invariant assertions
         if len(modulePrompts) != len(module):
             raise conversationErrors.ImproperPromptFormatError("Module prompts must be equal to the number of modules")
@@ -61,7 +61,7 @@ class modularConversation(standardConversation):
         # Create SPEAKING agents for each module
         self._speaking_agents = []
         for indevModule in self.allModules():
-            agent_name = conversationName + " - " + indevModule.name #name
+            agent_name = conversationName + " - " + str(indevModule.value) + " " + indevModule.name + " - Speaking" #name
             
             #prompts for the agent
             agent_prompt = []
@@ -76,7 +76,7 @@ class modularConversation(standardConversation):
         # Create ARGUMENT agents for each module
         self._argument_agents = []
         for indevModule in self.allModules():
-            agent_name = conversationName + " - " + indevModule.name
+            agent_name = conversationName + " - " + str(indevModule.value) + " " + indevModule.name + " - Arguing" #name
             agent_prompt = [controlPrompts[1], modulePrompts[indevModule.value]]
             agent = standardConversation(lowerModel, agent_prompt, agent_name, savePath)
             self._argument_agents.append(agent)
@@ -102,12 +102,13 @@ class modularConversation(standardConversation):
         if lastModuleIndex == -1: #if no history, get all messages
             lastMessages = self._getLastMessages()
         else: #if history, get messages from when last spoke
-            lastMessages = self._getLastMessages(self.getIndex()-lastModuleIndex)
+            lastMessages = self._getLastMessages(self.getIndex()-lastModuleIndex+1)
 
         #Make request to module speaking agent
         agent = self._speaking_agents[module_in.value]
         agent.cleanOutImages() #remove images from the conversation
         message = encodeMessageInternal(lastMessages, getTimeStamp(), "user", "LLM", image= self._current_image)
+        logging.info("Last Module Index: "+str(lastModuleIndex) + " Current Index: "+str(self.getIndex()))
         return agent.contConversationDict(message)
     
     #Retrive the controller given by the index and get their decision
@@ -153,7 +154,9 @@ class modularConversation(standardConversation):
         if newMessage.get("role") == "assistant":
             newMessage["note"] = self._state.name
         super().insertMessageDict(newMessage)
-        self._recordHistory() #add the history in
+
+        if(newMessage.get("role") == "assistant"):
+            self._recordHistory() #add the history in
     
     #Main function for continuing the conversation using a message dict object
     def contConversationDict(self, newMessage: dict) -> dict:
@@ -163,8 +166,12 @@ class modularConversation(standardConversation):
         return outMessage
     
     #Get a response from the LLM and store it without a human input, modified to use multiple agents
-    def turnoverConversationDict(self) -> dict:
-        return self.makeModuleSpeak(self.getState()) #make the module speak
+    def _makeRequest(self, tempConversation: list[dict] = None, model: str = None) -> str:
+        #Throw if _makeRequest is used improperly
+        if tempConversation != None or model != None:
+            raise conversationErrors.ConversationError("Modular conversation does not support conversation or model changes")
+        
+        return self.makeModuleSpeak(self.getState()).get("content") #make the module speak
 
     #Update the current image
     def set_current_image(self, image_path: str):
@@ -225,7 +232,7 @@ class modularConversation(standardConversation):
     #Helper function to get the last two messages as a string
     def _getLastMessages(self, number: int = None) -> str:
         #get the last messages (or one if there is only one)
-        if len(self._conversationInternal) < number or number == None:
+        if number == None or len(self._conversationInternal) < number:
             lastMessages = self._conversationInternal
         else:
             lastMessages = self._conversationInternal[-number:]
@@ -261,4 +268,7 @@ class modularConversation(standardConversation):
     
     #get the index of the conversation
     def getIndex(self) -> int:
-        return len(self._conversationInternal)-1
+        #The main internal conversation storage includes:
+        # - The constant prompts (number equal to length of init array)
+        # - All messages
+        return len(self._conversationInternal)-len(self._constantPrompt)
