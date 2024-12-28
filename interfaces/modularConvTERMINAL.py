@@ -8,11 +8,11 @@ from prompt_toolkit import prompt #Used to manage inputs from the user in the ch
 from dotenv import load_dotenv #used to load the .env file
 from rich import print #update the print function to include more colors
 from conversationManagement.modularConversation.modularConversation import modularConversation, module #import conversation class
-from conversationManagement.conversationTools.conversationTools import splitFileByMarker, encodeMessageInternal
+from conversationManagement.conversationTools.conversationTools import splitFileByMarker, encodeMessageInternal, init_logging
 from datetime import datetime #used to retrieve date and time for file name
 import logging #used to log messages
 
-logging.basicConfig(level=logging.INFO) #config logging
+init_logging() #config logging
 load_dotenv() #load the .env file
 
 #The below lines extract the prompt info from files and store them in the prompt list

@@ -46,12 +46,14 @@ class standardConversation:
 
         #If the client requires the umich API to be used, access it that way. Otherwise, open the standard openAI API
         if self._usingUmichApi:
+            logging.info("Using the umich API")
             self._client = AzureOpenAI(
                 api_version= os.getenv("UMICH_API_VERSION"), 
                 azure_endpoint=os.getenv("UMICH_API_ENDPOINT"), 
                 organization = os.getenv("UMICH_API_SHORTCODE"), 
                 api_key = os.getenv("UMICH_API_KEY")) 
         else:
+            logging.info("Using the standard openAI API")
             self._client = OpenAI()
 
         #Clear the temp conversation save file
@@ -81,9 +83,8 @@ class standardConversation:
 
         outputMessageText = self._makeRequest() #Make request to chat model
         timestamp = getTimeStamp() #get timestamp
-        sessionNumber = lastMessage.get("session_number") #get session number
         assistantType = lastMessage.get("assistant_type")
-        outputMessage = encodeMessageInternal(outputMessageText, timestamp, "assistant", assistantType, sessionNumber = sessionNumber) #package message
+        outputMessage = encodeMessageInternal(outputMessageText, timestamp, "assistant", assistantType) #package message
 
         self.insertMessageDict(outputMessage)
         return outputMessage
@@ -97,6 +98,8 @@ class standardConversation:
 
     #Insert a message into the conversation variable and file
     def insertMessageDict(self, newMessage: dict):
+        self._checkMessageDict(newMessage) #Check invariant
+        
         content = newMessage.get("content")
         role = newMessage.get("role")
         imagePath = newMessage.get("image_path")
@@ -152,8 +155,8 @@ class standardConversation:
 
         startTime = time.time() #start timer
 
-        output = self._client.chat.completions.create(model = model, messages = tempConversation).choices[0].message.content #request completion
-        # output = "omg wow the LLM talked" #yummy debug statement
+        # output = self._client.chat.completions.create(model = model, messages = tempConversation).choices[0].message.content #request completion
+        output = "omg wow the LLM talked" #yummy debug statement
 
         duration = time.time() - startTime #end timer
         duration_str = f"{duration:.2f} seconds" #convert duration to string
@@ -178,4 +181,17 @@ class standardConversation:
             messages.append(encodeMessage(prompt, "system"))
 
         return messages
-        
+    
+
+    #Runs some standard checks on the message data structs being passed around to catch issues early
+    def _checkMessageDict(self, message: dict):
+        #Check that the message has the right keys
+        for key in ("content", "timestamp", "role", "assistant_type", "image_path", "note"):
+            if not isinstance(message.get(key), str):
+                raise conversationErrors.ImproperMessageStructError("Message is missing key: " + key)
+
+        #Check that the message has the right values
+        if not message.get("role") in ("user", "assistant", "system"):
+            raise conversationErrors.ImproperMessageStructError("Invalid role given")
+        if not message.get("assistant_type") in ("LLM", "human", "controller"):
+            raise conversationErrors.ImproperMessageStructError(message.get("assistant_type") + " is not a valid assistant type")

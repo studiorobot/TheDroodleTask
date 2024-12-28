@@ -22,7 +22,7 @@ class StorageFolderNotFoundError(ConversationError):
         logging.error("Storage Folder Not Found Error: " + message)
 
 # Raised when a message struct is missing key components or has improper values
-class ImproperMessageDataStructError(ConversationError):
+class ImproperMessageStructError(ConversationError):
     def __init__(self, message: str):
         self.message = message
         logging.error("Improper Message Data Struct Error: " + message)

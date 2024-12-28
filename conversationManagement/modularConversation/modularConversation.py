@@ -5,6 +5,7 @@ from enum import Enum #used to define the module states
 import os #file management
 import re #used to do a better extraction from controller responses
 import logging #used to log errors and notes
+import time #used to time total system responses
 
 class module(Enum):
     PLAY  = 0
@@ -57,7 +58,7 @@ class modularConversation(standardConversation):
 
         #Create CONTROL agent
         self._controller = standardConversation(model, [controlPrompts[0]], conversationName + " - CONTROLLER", savePath)
-        
+
         # Create SPEAKING agents for each module
         self._speaking_agents = []
         for indevModule in self.allModules():
@@ -135,7 +136,7 @@ class modularConversation(standardConversation):
         message = message + "\n\n" + argumentStr
         
         #Package the new message
-        messageDict = encodeMessageInternal(message, "", "user", "Controller")
+        messageDict = encodeMessageInternal(message, "", "user", "controller")
         
         #make the request
         reply = self._controller.contConversationDict(messageDict).get("content")
@@ -160,9 +161,13 @@ class modularConversation(standardConversation):
     
     #Main function for continuing the conversation using a message dict object
     def contConversationDict(self, newMessage: dict) -> dict:
+        startTime = time.time() #start the timer
+
         self.insertMessageDict(newMessage) #Add new message
         self._switchStateUnbounded() #Switch the state
         outMessage = self.turnoverConversationDict()
+
+        logging.info("TOTAL RESPONSE TIME: "+str(time.time()-startTime))
         return outMessage
     
     #Get a response from the LLM and store it without a human input, modified to use multiple agents
@@ -226,6 +231,15 @@ class modularConversation(standardConversation):
         # Save the speaking agents
         for agent in self._speaking_agents:
             agent.makeConversationSave(savePath)
+        
+        # Save the log
+        logger = logging.getLogger()
+        log_stream = getattr(logger, "log_stream", None) #get log storage from logger
+        if log_stream != None:
+            with open("main_log.log", "w") as file:
+                file.write(log_stream.getvalue()) #write storage
+        else:
+            logging.warning("Tried to save log to file but no log storage was set up")
     
     #HELPERS---------------------------------------------------------------
     

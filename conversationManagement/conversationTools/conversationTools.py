@@ -1,6 +1,8 @@
 import base64 #used to turn image files into useable data for the api
 from datetime import datetime #used to retrieve date and time for file name
 from openai import OpenAI #openai api
+import logging #logging for errors and whatnot
+from io import StringIO #used for in-memory logging for later file storage
 
 #Encode a message, role, and potential image into a dictionary object
 def encodeMessage(textMessage: str, role: str, imagePath: str = ""):
@@ -16,13 +18,12 @@ def decodeImage(imagePath: str) -> str:
         return base64.b64encode(file.read()).decode('utf-8')
 
 #Encode a message used in internal conversation storage   
-def encodeMessageInternal(textMessage: str, timestamp: str, role: str, assistantType: str, sessionNumber: int = -1, image: str = "", note: str = "") -> dict:
+def encodeMessageInternal(textMessage: str, timestamp: str, role: str, assistantType: str, image: str = "", note: str = "") -> dict:
     Message = {
     "content": textMessage,
     "timestamp": timestamp,
     "role": role,
     "image_path": image,
-    "session_number": sessionNumber,
     "assistant_type": assistantType,
     "note": note
     }
@@ -87,3 +88,22 @@ def extract_features(client: OpenAI, model: str, image_path: str) -> str:
     )
 
     return response.choices[0].message.content.strip()
+
+# Function that preforms all of the logging commands we use regularly
+# The creation of conversation objects works without a call to this function but this enables
+# A more advanced logging system. No call to this function results in 
+# a logger that default prints to the terminal
+def init_logging(console_level = logging.WARNING, file_level = logging.INFO):
+    logger = logging.getLogger("main")
+    logger.setLevel(console_level)
+
+    #Console handler init
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(console_level)
+    logger.addHandler(console_handler)
+
+    #In-memory handler init (used for files)
+    log_stream = StringIO()
+    memory_handler = logging.StreamHandler(log_stream)
+    memory_handler.setLevel(file_level)
+    logger.addHandler(memory_handler)
