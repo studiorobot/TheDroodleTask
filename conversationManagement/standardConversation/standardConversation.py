@@ -155,8 +155,8 @@ class standardConversation:
 
         startTime = time.time() #start timer
 
-        # output = self._client.chat.completions.create(model = model, messages = tempConversation).choices[0].message.content #request completion
-        output = "omg wow the LLM talked" #yummy debug statement
+        output = self._client.chat.completions.create(model = model, messages = tempConversation).choices[0].message.content #request completion
+        # output = "omg wow the LLM talked" #yummy debug statement
 
         duration = time.time() - startTime #end timer
         duration_str = f"{duration:.2f} seconds" #convert duration to string
