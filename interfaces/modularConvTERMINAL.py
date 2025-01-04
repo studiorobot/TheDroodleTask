@@ -12,7 +12,7 @@ from conversationManagement.conversationTools.conversationTools import splitFile
 from datetime import datetime #used to retrieve date and time for file name
 import logging #used to log messages
 
-init_logging() #config logging
+init_logging(console_level = logging.INFO) #config logging
 load_dotenv() #load the .env file
 
 #The below lines extract the prompt info from files and store them in the prompt list

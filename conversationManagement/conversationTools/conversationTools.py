@@ -94,8 +94,8 @@ def extract_features(client: OpenAI, model: str, image_path: str) -> str:
 # A more advanced logging system. No call to this function results in 
 # a logger that default prints to the terminal
 def init_logging(console_level = logging.WARNING, file_level = logging.INFO):
-    logger = logging.getLogger("main")
-    logger.setLevel(console_level)
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
 
     #Console handler init
     console_handler = logging.StreamHandler()

@@ -2,6 +2,7 @@ from ..standardConversation.standardConversation import standardConversation #pa
 from ..conversationTools.conversationTools import encodeMessageInternal, getTimeStamp, extract_features #message encoder
 from ..conversationTools import conversationErrors #error handling
 from enum import Enum #used to define the module states
+from io import StringIO #used to control string streams
 import os #file management
 import re #used to do a better extraction from controller responses
 import logging #used to log errors and notes
@@ -231,12 +232,25 @@ class modularConversation(standardConversation):
         # Save the speaking agents
         for agent in self._speaking_agents:
             agent.makeConversationSave(savePath)
+
+        # Save the argument agents
+        for agent in self._argument_agents:
+            agent.makeConversationSave(savePath)
         
         # Save the log
-        logger = logging.getLogger()
-        log_stream = getattr(logger, "log_stream", None) #get log storage from logger
+        logPath = os.path.join(savePath, "main_log"+ self._idNumber +".log")
+
+        #Retrive log stream from logging
+        log_stream = None
+        for handler in logging.getLogger().handlers: 
+            log_stream = getattr(handler, "stream", None) #get log storage from logger
+            if isinstance(log_stream, StringIO):
+                break
+            else:
+                log_stream = None
+        
         if log_stream != None:
-            with open("main_log.log", "w") as file:
+            with open(logPath, "w") as file:
                 file.write(log_stream.getvalue()) #write storage
         else:
             logging.warning("Tried to save log to file but no log storage was set up")
