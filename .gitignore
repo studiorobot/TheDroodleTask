@@ -1,5 +1,6 @@
 .env
 /DroodleUI/ui/node_modules
+/HumanUI/ui/node_modules
 treyVENV
 /conversationArchive/*- temp.json
 /conversationArchive/*????-????.json
