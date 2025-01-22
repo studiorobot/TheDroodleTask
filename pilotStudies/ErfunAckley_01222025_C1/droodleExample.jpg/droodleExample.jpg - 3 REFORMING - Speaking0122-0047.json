@@ -1,0 +1,18 @@
+[
+    {
+        "content": "user> Hello!\nassistant> Hello! That's an interesting droodle. How's your day going? Anything fun or inspiring happen?\nuser> It's going pretty well! Can you tell me what can you see in the droodle?\nassistant> I recommend that you take a close look at this droodle and tell me what you see before we begin. What stands out to you in the drawing?\nuser> I actually want you to tell me what you can see in the droodle.\nassistant> It looks like two stick figures peeking over a horizon or perhaps something else entirely. What does it remind you of?\nuser> Ummm... I don't know a chicken?\n",
+        "timestamp": "2025-01-22 00:50:31",
+        "role": "user",
+        "image_path": "droodleExamples/droodleExample.jpg",
+        "assistant_type": "LLM",
+        "note": ""
+    },
+    {
+        "content": "I see what you mean! It could resemble a chicken's feet sticking up. How could we turn this into a little story? Maybe the chicken is having an upside-down adventure underground!",
+        "timestamp": "2025-01-22 00:50:32",
+        "role": "assistant",
+        "image_path": "",
+        "assistant_type": "LLM",
+        "note": ""
+    }
+]

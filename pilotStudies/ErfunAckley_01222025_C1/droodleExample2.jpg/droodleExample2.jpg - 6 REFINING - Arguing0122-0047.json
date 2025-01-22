@@ -1,0 +1,18 @@
+[
+    {
+        "content": "assistant> Hello! I\u2019m your AI guide for building a doodle caption. I\u2019m designed to ask you questions and guide your reasoning but if you want to take control of your own creative process, I\u2019ll be happy to help wherever possible.\nuser> Howdy!!\n",
+        "timestamp": "2025-01-22 00:51:03",
+        "role": "user",
+        "image_path": "",
+        "assistant_type": "LLM",
+        "note": ""
+    },
+    {
+        "content": "The conversational style here promotes engagement and ownership of the creative process, encouraging the user to explore their own ideas freely. By guiding the conversation with supportive questions, it fosters a sense of independence that can lead to deeper creative insights and more personal, meaningful captioning.",
+        "timestamp": "2025-01-22 00:51:12",
+        "role": "assistant",
+        "image_path": "",
+        "assistant_type": "LLM",
+        "note": ""
+    }
+]

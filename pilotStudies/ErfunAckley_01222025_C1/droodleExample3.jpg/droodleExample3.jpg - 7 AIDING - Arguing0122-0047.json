@@ -1,0 +1,18 @@
+[
+    {
+        "content": "assistant> Hello! I\u2019m your AI guide for building a doodle caption. I\u2019m designed to ask you questions and guide your reasoning but if you want to take control of your own creative process, I\u2019ll be happy to help wherever possible.\nuser> Hello!!\n",
+        "timestamp": "2025-01-22 00:51:32",
+        "role": "user",
+        "image_path": "",
+        "assistant_type": "LLM",
+        "note": ""
+    },
+    {
+        "content": "The \"Aiding\" style is particularly effective here because it responds to possible signs of the user's struggle by offering assistance without overshadowing their creativity. This approach fosters a collaborative atmosphere where the user feels supported while ultimately retaining ownership of the creative process, encouraging continued engagement.",
+        "timestamp": "2025-01-22 00:51:43",
+        "role": "assistant",
+        "image_path": "",
+        "assistant_type": "LLM",
+        "note": ""
+    }
+]

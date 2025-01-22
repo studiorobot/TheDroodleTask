@@ -1,0 +1,18 @@
+[
+    {
+        "content": "assistant> Hello! I\u2019m your AI guide for building a doodle caption. I\u2019m designed to ask you questions and guide your reasoning but if you want to take control of your own creative process, I\u2019ll be happy to help wherever possible.\nuser> Howdy!!\n",
+        "timestamp": "2025-01-22 00:51:03",
+        "role": "user",
+        "image_path": "",
+        "assistant_type": "LLM",
+        "note": ""
+    },
+    {
+        "content": "Using a storytelling technique can encourage deeper engagement with the droodle, transforming it from a mere image into a narrative that resonates with both the creator and the audience. By asking questions about the story behind the image, you allow for a more imaginative approach that can lead to unique and memorable captions.",
+        "timestamp": "2025-01-22 00:51:08",
+        "role": "assistant",
+        "image_path": "",
+        "assistant_type": "LLM",
+        "note": ""
+    }
+]

@@ -1,0 +1,18 @@
+[
+    {
+        "content": "user> Hello!\nassistant> Hello! That's an interesting droodle. How's your day going? Anything fun or inspiring happen?\nuser> It's going pretty well! Can you tell me what can you see in the droodle?\n",
+        "timestamp": "2025-01-22 00:49:27",
+        "role": "user",
+        "image_path": "droodleExamples/droodleExample.jpg",
+        "assistant_type": "LLM",
+        "note": ""
+    },
+    {
+        "content": "I recommend that you take a close look at this droodle and tell me what you see before we begin. What stands out to you in the drawing?",
+        "timestamp": "2025-01-22 00:49:28",
+        "role": "assistant",
+        "image_path": "",
+        "assistant_type": "LLM",
+        "note": ""
+    }
+]

@@ -1,0 +1,18 @@
+[
+    {
+        "content": "assistant> Hello! I\u2019m your AI guide for building a doodle caption. I\u2019m designed to ask you questions and guide your reasoning but if you want to take control of your own creative process, I\u2019ll be happy to help wherever possible.\nuser> Hello!!\n",
+        "timestamp": "2025-01-22 00:51:32",
+        "role": "user",
+        "image_path": "",
+        "assistant_type": "LLM",
+        "note": ""
+    },
+    {
+        "content": "Engaging in playful conversation from the start fosters a welcoming atmosphere, encouraging open creativity and collaboration. This approach allows for unexpected connections and ideas to emerge, enriching the process of captioning the droodle with personal experiences or insights that might inspire unique and clever titles.",
+        "timestamp": "2025-01-22 00:51:33",
+        "role": "assistant",
+        "image_path": "",
+        "assistant_type": "LLM",
+        "note": ""
+    }
+]

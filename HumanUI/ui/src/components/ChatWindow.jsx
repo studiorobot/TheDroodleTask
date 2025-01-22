@@ -13,7 +13,7 @@ function ChatWindow({ currentImageIndex }) {
   const lastMessageRef = useRef(null);
 
   useEffect(() => {
-    websocket.current = new WebSocket('ws://localhost:8766');
+    websocket.current = new WebSocket('ws://localhost:8765');
 
     websocket.current.onmessage = (event) => {
       const data = JSON.parse(event.data);
@@ -77,7 +77,7 @@ function ChatWindow({ currentImageIndex }) {
         ))}
         {loading && (
           <div className="chat-message assistant">
-            <span>Forwarding...</span>
+            <span>Thinking ...</span>
           </div>
         )}
         <div ref={lastMessageRef} />

@@ -1,0 +1,74 @@
+[
+    {
+        "content": "Hello!",
+        "timestamp": "2025-01-22 00:47:52",
+        "role": "user",
+        "image_path": "droodleExamples/droodleExample.jpg",
+        "assistant_type": "LLM",
+        "note": ""
+    },
+    {
+        "content": "Hello! That's an interesting droodle. How's your day going? Anything fun or inspiring happen?",
+        "timestamp": "2025-01-22 00:48:06",
+        "role": "assistant",
+        "image_path": "",
+        "assistant_type": "LLM",
+        "note": "PLAY"
+    },
+    {
+        "content": "It's going pretty well! Can you tell me what can you see in the droodle?",
+        "timestamp": "2025-01-22 00:49:09",
+        "role": "user",
+        "image_path": "droodleExamples/droodleExample.jpg",
+        "assistant_type": "LLM",
+        "note": ""
+    },
+    {
+        "content": "I recommend that you take a close look at this droodle and tell me what you see before we begin. What stands out to you in the drawing?",
+        "timestamp": "2025-01-22 00:49:28",
+        "role": "assistant",
+        "image_path": "",
+        "assistant_type": "LLM",
+        "note": "TARGETED_OBSERVATION"
+    },
+    {
+        "content": "I actually want you to tell me what you can see in the droodle.",
+        "timestamp": "2025-01-22 00:49:47",
+        "role": "user",
+        "image_path": "droodleExamples/droodleExample.jpg",
+        "assistant_type": "LLM",
+        "note": ""
+    },
+    {
+        "content": "It looks like two stick figures peeking over a horizon or perhaps something else entirely. What does it remind you of?",
+        "timestamp": "2025-01-22 00:50:03",
+        "role": "assistant",
+        "image_path": "",
+        "assistant_type": "LLM",
+        "note": "STIMULATION"
+    },
+    {
+        "content": "Ummm... I don't know a chicken?",
+        "timestamp": "2025-01-22 00:50:18",
+        "role": "user",
+        "image_path": "droodleExamples/droodleExample.jpg",
+        "assistant_type": "LLM",
+        "note": ""
+    },
+    {
+        "content": "I see what you mean! It could resemble a chicken's feet sticking up. How could we turn this into a little story? Maybe the chicken is having an upside-down adventure underground!",
+        "timestamp": "2025-01-22 00:50:32",
+        "role": "assistant",
+        "image_path": "",
+        "assistant_type": "LLM",
+        "note": "REFORMING"
+    },
+    {
+        "content": "Hello! I\u2019m your AI guide for building a doodle caption. I\u2019m designed to ask you questions and guide your reasoning but if you want to take control of your own creative process, I\u2019ll be happy to help wherever possible.",
+        "timestamp": "2025-01-22 00:51:53",
+        "role": "assistant",
+        "image_path": "",
+        "assistant_type": "LLM",
+        "note": "REFORMING"
+    }
+]

@@ -217,11 +217,13 @@ class modularConversation(standardConversation):
         logging.info("Switched to module: "+toModule.name)
         return True
     
-    def makeConversationSave(self):
-        # make the new directory one level higher than the save path
-        parent_save_path = os.path.dirname(self._savePath)
-        savePath = os.path.join(parent_save_path, "modularConversation - " + self._conversationName + self._idNumber)
-        os.mkdir(savePath)
+    def makeConversationSave(self, savePath=None):
+        # If savePath is not provided, use the original behavior
+        if savePath is None:
+            parent_save_path = os.path.dirname(self._savePath)
+            savePath = os.path.join(parent_save_path, "modularConversation - " + self._conversationName + self._idNumber)
+        
+        os.makedirs(savePath, exist_ok=True)  # Ensure the directory exists
 
         # Save the core conversation
         super().makeConversationSave(savePath)
@@ -236,22 +238,22 @@ class modularConversation(standardConversation):
         # Save the argument agents
         for agent in self._argument_agents:
             agent.makeConversationSave(savePath)
-        
+            
         # Save the log
         logPath = os.path.join(savePath, "main_log"+ self._idNumber +".log")
 
-        #Retrive log stream from logging
+        # Retrieve log stream from logging
         log_stream = None
         for handler in logging.getLogger().handlers: 
-            log_stream = getattr(handler, "stream", None) #get log storage from logger
+            log_stream = getattr(handler, "stream", None)  # Get log storage from logger
             if isinstance(log_stream, StringIO):
                 break
             else:
                 log_stream = None
-        
-        if log_stream != None:
+            
+        if log_stream is not None:
             with open(logPath, "w") as file:
-                file.write(log_stream.getvalue()) #write storage
+                file.write(log_stream.getvalue())  # Write storage
         else:
             logging.warning("Tried to save log to file but no log storage was set up")
     
