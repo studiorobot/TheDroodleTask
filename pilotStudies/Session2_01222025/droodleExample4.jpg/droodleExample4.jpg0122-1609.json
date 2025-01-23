@@ -1,0 +1,66 @@
+[
+    {
+        "content": "Hello! I\u2019m your AI guide for building a doodle caption. I\u2019m designed to ask you questions and guide your reasoning but if you want to take control of your own creative process, I\u2019ll be happy to help wherever possible.",
+        "timestamp": "2025-01-22 16:40:02",
+        "role": "assistant",
+        "image_path": "",
+        "assistant_type": "LLM",
+        "note": "PLAY"
+    },
+    {
+        "content": "What does the picture look like to you?",
+        "timestamp": "2025-01-22 16:40:11",
+        "role": "user",
+        "image_path": "droodleExamples/droodleExample4.jpg",
+        "assistant_type": "LLM",
+        "note": ""
+    },
+    {
+        "content": "The image features a simple design with a dot in the center, lines radiating from it, and a horizontal line at the bottom. What parts of the image stand out or seem most interesting to you?",
+        "timestamp": "2025-01-22 16:40:29",
+        "role": "assistant",
+        "image_path": "",
+        "assistant_type": "LLM",
+        "note": "TARGETED_OBSERVATION"
+    },
+    {
+        "content": "I don't think we are looking at the same picture. This one looks like a box inside a box with particles inside the same box",
+        "timestamp": "2025-01-22 16:41:26",
+        "role": "user",
+        "image_path": "droodleExamples/droodleExample4.jpg",
+        "assistant_type": "LLM",
+        "note": ""
+    },
+    {
+        "content": "I see! The image features a dot in the center with lines radiating from it, and a horizontal line below. What do you find intriguing about this droodle?",
+        "timestamp": "2025-01-22 16:41:47",
+        "role": "assistant",
+        "image_path": "",
+        "assistant_type": "LLM",
+        "note": "PLAY"
+    },
+    {
+        "content": "I'll caption it \"Block person planting seeds in a blocky world\"",
+        "timestamp": "2025-01-22 16:44:09",
+        "role": "user",
+        "image_path": "droodleExamples/droodleExample4.jpg",
+        "assistant_type": "LLM",
+        "note": ""
+    },
+    {
+        "content": "That\u2019s a creative caption! \"Block person planting seeds in a blocky world\" fits well. The lines and shapes could represent a planting action in a geometric setting. Are there other elements in the image that connect with this story?",
+        "timestamp": "2025-01-22 16:44:26",
+        "role": "assistant",
+        "image_path": "",
+        "assistant_type": "LLM",
+        "note": "GROUNDING"
+    },
+    {
+        "content": "Hello! I\u2019m your AI guide for building a doodle caption. I\u2019m designed to ask you questions and guide your reasoning but if you want to take control of your own creative process, I\u2019ll be happy to help wherever possible.",
+        "timestamp": "2025-01-22 17:14:35",
+        "role": "assistant",
+        "image_path": "",
+        "assistant_type": "LLM",
+        "note": "GROUNDING"
+    }
+]
