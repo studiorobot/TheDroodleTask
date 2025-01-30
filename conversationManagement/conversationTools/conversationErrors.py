@@ -61,3 +61,10 @@ class ImageFileNotFoundError(ConversationError):
         self.message = message
         logging.error("Image File Not Found Error: " + message)
 
+# Async Conversation Errors--------------------------------------------
+
+# Raised when an error is encountered that causes the old means of conversation to be used
+class slowDownError(ConversationError):
+    def __init__(self, message: str):
+        self.message = message
+        logging.warning("Slow Down Error: " + message)
