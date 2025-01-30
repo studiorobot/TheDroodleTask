@@ -15,10 +15,11 @@ import time #used to time api responses
 
 from conversationManagement.conversationTools.conversationTools import encodeMessage, encodeMessageInternal, getTimeStamp, makeID, removeImgInConv #tools for conversation
 from ..conversationTools import conversationErrors #error handling
+from ..conversationTools.tokenTracker import tokenTracker #token tracking for api requests
 
 class standardConversation:
 
-    def __init__(self, model: str, prompts: list[str], conversationName: str, savePath: str = 'conversationArchive'):
+    def __init__(self, model: str, prompts: list[str], conversationName: str, savePath: str = 'conversationArchive', tokenTracker: tokenTracker = None):
         #Make some invariant assertions
         if not isinstance(prompts, list):
             raise conversationErrors.ImproperPromptFormatError("Prompts must be in a list")
@@ -34,6 +35,11 @@ class standardConversation:
         self._tempFilePath = "./" + savePath + "/" + conversationName + " - temp.json"
         self._conversation = [] #important conversation variable for openAI
         self._conversationInternal = [] #conversation variable for our storage
+
+        if tokenTracker is None:
+            self._tokenTracker = tokenTracker()
+        else:
+            self._tokenTracker = tokenTracker
 
         #Assert staments to check init variables
         if not os.path.exists(savePath):
@@ -80,8 +86,23 @@ class standardConversation:
     def turnoverConversationDict(self) -> dict:
         #Get the last message from storage
         lastMessage = self._conversationInternal[-1]
+        if lastMessage.get("role") != "user":
+            raise conversationErrors.ImproperMessageStructError("Last message in conversation is not a user message")
+        iterations = 0
 
-        outputMessageText = self._makeRequest() #Make request to chat model
+        #Recursievely try to make a request to the LLM
+        iterations = 0
+        while True:
+            iterations += 1
+            try:
+                outputMessageText = self._makeRequest() #Make request to chat model
+                break
+            except conversationErrors.slowDownError as e:
+                logging.warning(f"Slow down error caught, waiting {10*iterations} seconds before trying again")
+                time.sleep(10*iterations); #wait 10 seconds before trying again
+            if iterations > 6:
+                raise conversationErrors.slowDownError("Too many slow down errors")
+
         timestamp = getTimeStamp() #get timestamp
         assistantType = lastMessage.get("assistant_type")
         outputMessage = encodeMessageInternal(outputMessageText, timestamp, "assistant", assistantType) #package message
@@ -150,8 +171,13 @@ class standardConversation:
         #if model is allowed to default, use the model given in class init
         if model is None:
             model = self._model
+
+        #If there have been too many tokens sent in the last minute, throw error
+        self._tokenTracker.checkTokenLimit(model)
+
+        self._tokenTracker.addTokenHistory(tempConversation, model) #add tokens to history
         
-        logging.info("request made using " + model + ":" + str(tempConversation)+"\n")
+        logging.info(f"request made using {model} with {self._tokenTracker.getTokensLastMinute(model)} tokens in history:" + str(tempConversation)+"\n")
 
         startTime = time.time() #start timer
 
@@ -160,7 +186,8 @@ class standardConversation:
 
         duration = time.time() - startTime #end timer
         duration_str = f"{duration:.2f} seconds" #convert duration to string
-        logging.info(f"response received in {duration_str}: " + output) #log response and time
+        self._tokenTracker.addTokenHistory(output, model) #add tokens to history
+        logging.info(f"response received in {duration_str} with {self._tokenTracker.getTokensLastMinute(model)} tokens in history: " + output) #log response and time
         
         return output #return message content
             

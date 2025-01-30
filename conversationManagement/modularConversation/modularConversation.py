@@ -1,12 +1,15 @@
 from ..standardConversation.standardConversation import standardConversation #parent 
+from ..asyncConversation.asyncConversation import asyncConversation #async agents
 from ..conversationTools.conversationTools import encodeMessageInternal, getTimeStamp, extract_features #message encoder
 from ..conversationTools import conversationErrors #error handling
+from ..conversationTools.tokenTracker import tokenTracker #token tracking
 from enum import Enum #used to define the module states
 from io import StringIO #used to control string streams
 import os #file management
 import re #used to do a better extraction from controller responses
 import logging #used to log errors and notes
 import time #used to time total system responses
+import asyncio #used to call async functions
 
 class module(Enum):
     PLAY  = 0
@@ -46,7 +49,7 @@ class modularConversation(standardConversation):
             os.mkdir(savePath)
 
         #Init parent class
-        super().__init__(model = model, prompts = constantPrompt + modulePrompts, conversationName = conversationName, savePath = savePath)
+        super().__init__(model = model, prompts = constantPrompt + modulePrompts, conversationName = conversationName, savePath = savePath, tokenTracker = tokenTracker())
         
         self._constantPrompt = constantPrompt #prompts that hold true always
         self._modulePrompts = modulePrompts #prompts that switch out
@@ -58,7 +61,7 @@ class modularConversation(standardConversation):
         self._recordHistory()
 
         #Create CONTROL agent
-        self._controller = standardConversation(model, [controlPrompts[0]], conversationName + " - CONTROLLER", savePath)
+        self._controller = standardConversation(model, [controlPrompts[0]], conversationName + " - CONTROLLER", savePath, self._tokenTracker)
 
         # Create SPEAKING agents for each module
         self._speaking_agents = []
@@ -72,7 +75,7 @@ class modularConversation(standardConversation):
             agent_prompt.append(self._modulePrompts[indevModule.value])
 
             #make and add the agent
-            agent = standardConversation(model, agent_prompt, agent_name, savePath)
+            agent = standardConversation(model, agent_prompt, agent_name, savePath, self._tokenTracker)
             self._speaking_agents.append(agent)
 
         # Create ARGUMENT agents for each module
@@ -80,21 +83,29 @@ class modularConversation(standardConversation):
         for indevModule in self.allModules():
             agent_name = conversationName + " - " + str(indevModule.value) + " " + indevModule.name + " - Arguing" #name
             agent_prompt = [controlPrompts[1], modulePrompts[indevModule.value]]
-            agent = standardConversation(lowerModel, agent_prompt, agent_name, savePath)
+            agent = asyncConversation(lowerModel, agent_prompt, agent_name, savePath, self._tokenTracker)
             self._argument_agents.append(agent)
     
     #DECISION MAKING--------------------------------------------------------
 
     #Get the arguments for each module, speaking to each argument agent
-    def get_module_arguments(self, modules: list[module]) -> list[dict]:
+    async def get_module_arguments(self, modules: list[module]) -> list[dict]:
         #make a message containing the last two messages from the conversation
         formattedMessage = encodeMessageInternal(self._getLastMessages(2), getTimeStamp(), "user", "LLM")
-        outputMessages = []
+        tasks = []
 
-        #Call each agent to get their argument
-        for agent in self._argument_agents:
-            message = agent.contConversationDict(formattedMessage)
-            outputMessages.append(message)
+        try:
+            #Call each agent to get their argument
+            for agent in self._argument_agents:
+                tasks.append(agent.asyncContConversationDict(formattedMessage))
+            outputMessages = await asyncio.gather(*tasks)
+        except conversationErrors.slowDownError:
+            logging.warning("Slowdown complete, redirected to non-parallel requests")
+            #Call each agent to get their argument
+            for agent in self._argument_agents:
+                message = agent.contConversationDict(formattedMessage)
+                outputMessages.append(message)
+
         return outputMessages
 
     # Gets given module to talk
@@ -124,7 +135,7 @@ class modularConversation(standardConversation):
 
         #get arguments
         possibleModules = self.allModules()
-        arguments = self.get_module_arguments(possibleModules)
+        arguments = asyncio.run(self.get_module_arguments(possibleModules))
 
         #put all the arguments in one string
         argumentStr = ""
