@@ -59,7 +59,7 @@ os.makedirs(session_dir, exist_ok=True)
 #     conversations[image_name] = modularConversation("gpt-4o", constantPrompt, modularPrompt, controlPrompts, image_name)
 
 # Load the initial prompt for the agent
-with open("prompts/prompt.txt", "r") as file:
+with open("prompts/baseline_prompt.txt", "r") as file:
     initial_prompt = file.read()
 
 # Initialize conversations for each image

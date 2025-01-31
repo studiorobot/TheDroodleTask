@@ -164,86 +164,33 @@ class standardConversation:
 
     #Makes a request to the LLM using either the defualt conversation and model or given new conversation and model
     #INPUT CONVERSATION IN CHATGPT FORM
-    # def _makeRequest(self, tempConversation: list[dict] = None, model: str = None) -> str:
-    #     #If conversation is allowed to default, use the conversation in the class instance and put the intial prompts at the start
-    #     if tempConversation is None:
-    #         tempConversation = self._prepPrompts() + self._conversation
-
-    #     #if model is allowed to default, use the model given in class init
-    #     if model is None:
-    #         model = self._model
-
-    #     #If there have been too many tokens sent in the last minute, throw error
-    #     self._tokenTracker.checkTokenLimit(model)
-
-    #     self._tokenTracker.addTokenHistory(tempConversation, model) #add tokens to history
-        
-    #     logging.info(f"request made using {model} with {self._tokenTracker.getTokensLastMinute(model)} tokens in history:" + str(tempConversation)+"\n")
-
-    #     startTime = time.time() #start timer
-
-    #     output = self._client.chat.completions.create(model = model, messages = tempConversation).choices[0].message.content #request completion
-    #     # output = "omg wow the LLM talked" #yummy debug statement
-
-    #     duration = time.time() - startTime #end timer
-    #     duration_str = f"{duration:.2f} seconds" #convert duration to string
-    #     self._tokenTracker.addTokenHistory(output, model) #add tokens to history
-    #     logging.info(f"response received in {duration_str} with {self._tokenTracker.getTokensLastMinute(model)} tokens in history: " + output) #log response and time
-        
-    #     return output #return message content
-
     def _makeRequest(self, tempConversation: list[dict] = None, model: str = None) -> str:
-        # If conversation is allowed to default, use the stored conversation and add prompts
+        #If conversation is allowed to default, use the conversation in the class instance and put the intial prompts at the start
         if tempConversation is None:
             tempConversation = self._prepPrompts() + self._conversation
 
-        # If model is allowed to default, use the one from class initialization
+        #if model is allowed to default, use the model given in class init
         if model is None:
             model = self._model
 
-        # Check for token limit before making the request
+        #If there have been too many tokens sent in the last minute, throw error
         self._tokenTracker.checkTokenLimit(model)
 
-        # Track token history for this request
-        self._tokenTracker.addTokenHistory(tempConversation, model)
+        self._tokenTracker.addTokenHistory(tempConversation, model) #add tokens to history
+        
+        logging.info(f"request made using {model} with {self._tokenTracker.getTokensLastMinute(model)} tokens in history:" + str(tempConversation)+"\n")
 
-        logging.info(f"Request made using {model} with {self._tokenTracker.getTokensLastMinute(model)} tokens in history:\n{tempConversation}\n")
+        startTime = time.time() #start timer
 
-        startTime = time.time()  # Start timer
+        output = self._client.chat.completions.create(model = model, messages = tempConversation).choices[0].message.content #request completion
+        # output = "omg wow the LLM talked" #yummy debug statement
 
-        # Prepare the request payload
-        request_data = {
-            "model": model,
-            "messages": tempConversation
-        }
-
-        # Check if the last message contains an image
-        last_message = tempConversation[-1]
-        image_path = last_message.get("image_path", "")
-
-        if image_path:
-            if not os.path.isfile(image_path):
-                logging.warning(f"Image file not found: {image_path}")
-            else:
-                with open(image_path, "rb") as image_file:
-                    request_data["image"] = image_file.read()  # Attach image data
-
-        # Make the request to OpenAI API
-        response = self._client.chat.completions.create(**request_data)
-
-        # Extract the model's response
-        output = response.choices[0].message.content
-
-        # Track the duration of the request
-        duration = time.time() - startTime
-        duration_str = f"{duration:.2f} seconds"
-
-        # Add response tokens to history
-        self._tokenTracker.addTokenHistory(output, model)
-
-        logging.info(f"Response received in {duration_str} with {self._tokenTracker.getTokensLastMinute(model)} tokens in history: {output}")
-
-        return output  # Return message content
+        duration = time.time() - startTime #end timer
+        duration_str = f"{duration:.2f} seconds" #convert duration to string
+        self._tokenTracker.addTokenHistory(output, model) #add tokens to history
+        logging.info(f"response received in {duration_str} with {self._tokenTracker.getTokensLastMinute(model)} tokens in history: " + output) #log response and time
+        
+        return output #return message content
             
     #Append message and potential image file to .txt file
     def _updateSave(self):
