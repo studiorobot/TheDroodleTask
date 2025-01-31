@@ -125,6 +125,26 @@ async def handler(websocket, path):
                 }))
                 continue
 
+            if command == "submit_caption":
+                caption_text = data.get("caption", "")
+                image_index = data.get("imageIndex", -1)
+                
+                if caption_text and 0 <= image_index < len(images):
+                    image_name = os.path.basename(images[image_index])
+                    conversations[image_name].insertMessage(f"User submitted caption: {caption_text}", "user")
+                    print(f"Caption received for {image_name}: {caption_text}")
+
+                    # Send confirmation back to frontend
+                    await websocket.send(json.dumps({
+                        "status": "caption_received",
+                        "message": f"Caption for {image_name} saved."
+                    }))
+                else:
+                    await websocket.send(json.dumps({
+                        "status": "error",
+                        "message": "Invalid caption or image index."
+                    }))
+
             # Handle commands if the userInput starts with a "/"
             if userInput.startswith("/"):
                 if userInput[1:] == "exit":

@@ -20,6 +20,17 @@ function App() {
     };
   }, []);
 
+  // Function to handle caption submission
+  const handleCaptionSubmit = (caption) => {
+    if (websocket.current) {
+      websocket.current.send(JSON.stringify({
+        command: "submit_caption",
+        caption: caption,
+        imageIndex: currentImageIndex
+      }));
+    }
+  };
+
   // Function to handle image switching
   const handleImageSwitch = (newIndex, direction) => {
     // Send save and reset command to the WebSocket server
@@ -52,6 +63,7 @@ function App() {
           currentImageIndex={currentImageIndex} 
           setCurrentImageIndex={setCurrentImageIndex} 
           onImageSwitch={handleImageSwitch} 
+          onSubmitCaption={handleCaptionSubmit}
         />
       </div>
     </div>

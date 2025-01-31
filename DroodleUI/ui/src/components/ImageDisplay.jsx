@@ -1,26 +1,49 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Rnd } from 'react-rnd';  // Import react-rnd for drag/resize
 import '../styles/ImageDisplay.css';
+import CaptionPopup from './CaptionPopup'; // Import the new pop-up component
 import abstractImage1 from '../../../../droodleExamples/droodleExample1.jpg';  // First image
 import abstractImage2 from '../../../../droodleExamples/droodleExample2.jpg';  // Second image
 import abstractImage3 from '../../../../droodleExamples/droodleExample3.jpg';  // Third image
 import abstractImage4 from '../../../../droodleExamples/droodleExample4.jpg';  // Fourth image
 
-function ImageDisplay({ currentImageIndex, setCurrentImageIndex, onImageSwitch }) {
+function ImageDisplay({ currentImageIndex, setCurrentImageIndex, onImageSwitch, onSubmitCaption }) {
   const images = [abstractImage1, abstractImage2, abstractImage3, abstractImage4]; // Array of images
 
   // State to store the rotation, position, and size of each image
   const [imageStates, setImageStates] = useState(() => {
     return images.map(() => ({
       rotation: 0,
-      position: { x: 50, y: 50 },
-      size: { width: 200, height: 200 }
+      position: { x: 0, y: 0 },  // Start at (0,0), will be updated in useEffect
+      size: { width: 350, height: 350 }
     }));
   });
 
   const [isHoveringCorner, setIsHoveringCorner] = useState(false);  // State for showing rotation icon
   const [isRotating, setIsRotating] = useState(false);  // State to track if the image is being rotated
   const rndRef = useRef(null);  // Reference to Rnd component
+  const containerRef = useRef(null); // Reference to image-container
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+
+  // Center the image after component mounts
+  useEffect(() => {
+    if (containerRef.current) {
+      const containerWidth = containerRef.current.clientWidth;
+      const containerHeight = containerRef.current.clientHeight;
+      const imageWidth = imageStates[0].size.width;
+      const imageHeight = imageStates[0].size.height;
+
+      const centerX = (containerWidth - imageWidth) / 2;
+      const centerY = (containerHeight - imageHeight) / 2;
+
+      setImageStates((prevStates) =>
+        prevStates.map((state) => ({
+          ...state,
+          position: { x: centerX, y: centerY }
+        }))
+      );
+    }
+  }, []); // Runs only once after the first render
 
   // Handle rotation based on dragging at corners
   const handleRotateStart = (e) => {
@@ -93,15 +116,17 @@ function ImageDisplay({ currentImageIndex, setCurrentImageIndex, onImageSwitch }
 
   const currentImageState = imageStates[currentImageIndex];  // Get the state for the current image
 
+  const openPopup = () => {
+    setIsPopupOpen(true);
+  };
+  
+  const closePopup = () => {
+    setIsPopupOpen(false);
+  };
+
+  
   return (
-    <div className="image-container" style={{ userSelect: 'none' }}>
-      <button 
-        onClick={handlePreviousImage} 
-        className="prev-button"
-        disabled={currentImageIndex === 0}  // Disable if the first image is active
-      >
-        ←
-      </button>
+    <div ref={containerRef} className="image-container" style={{ userSelect: 'none', position: "relative"}}>
       <Rnd
         ref={rndRef}  // Reference to Rnd component
         size={currentImageState.size}  // Set size from state
@@ -207,13 +232,29 @@ function ImageDisplay({ currentImageIndex, setCurrentImageIndex, onImageSwitch }
           </div>
         </div>
       </Rnd>
-      <button 
-        onClick={handleNextImage} 
-        className="next-button"
-        disabled={currentImageIndex === images.length - 1}  // Disable if the last image is active
-      >
-        →
-      </button>
+
+      <div className="button-container">
+        <button 
+          onClick={handlePreviousImage} 
+          className="prev-button"
+          disabled={currentImageIndex === 0}  
+        >
+          ←
+        </button>
+        
+        <button onClick={openPopup} className="submit-caption-button">
+          Submit Caption
+        </button>
+        
+        <button 
+          onClick={handleNextImage} 
+          className="next-button"
+          disabled={currentImageIndex === images.length - 1}  
+        >
+          →
+        </button>
+      </div>
+      {isPopupOpen && <CaptionPopup onClose={closePopup} onSubmitCaption={onSubmitCaption} />}
     </div>
   );
 }
