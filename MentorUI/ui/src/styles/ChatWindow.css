@@ -31,12 +31,12 @@
   }
   
   .chat-message.user span {
-    background-color: #01776b;
+    background-color: #c14a297b;
     color: white;
   }
   
   .chat-message.assistant span {
-    background-color: #735443;
+    background-color: #2975c17b;
   }
   
   .chat-input {
@@ -53,15 +53,17 @@
   
   .chat-input button {
     margin-top: 0.5vw;
-    height: 25px;
-    padding: 0 20px;
+    height: 45px;
+    padding: 0 10px;
     border: none;
-    background-color: #03A6A6;
-    color: rgb(0, 0, 0);
+    background-color: #22913da3;
+    color: rgb(255, 255, 255);
     cursor: pointer;
   }
   
   .chat-input button:hover {
-    background-color: #147373;
-    color: white;
+    background-color: #45d168a3;
+    color: rgb(0, 0, 0);
   }
+
+  
