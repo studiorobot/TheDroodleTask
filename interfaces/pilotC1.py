@@ -17,16 +17,17 @@ from prompt_toolkit import prompt #Used to manage inputs from the user in the ch
 from dotenv import load_dotenv #used to load the .env file
 from rich import print #update the print function to include more colors
 from conversationManagement.modularConversation.modularConversation import modularConversation #import standard conversation class
-from conversationManagement.conversationTools.conversationTools import splitFileByMarker #import file splitter
+from conversationManagement.conversationTools.conversationTools import splitFileByMarker, init_logging, encodeMessageInternal, getTimeStamp #import file splitter
 import asyncio #used to run async functions
 import websockets #used to create a websocket connection
 import json #used to encode and decode json messages
 from datetime import datetime #used to retrieve date and time for file name
 import logging #used to log messages
+import sys #used to access exeption line number
 
 
 # Define the specific images you want to use from the directory
-images = ["droodleExamples/droodleExample.jpg", "droodleExamples/droodleExample2.jpg", "droodleExamples/droodleExample3.jpg", "droodleExamples/droodleExample4.jpg"]
+images = ["droodleExamples/droodleExample1.jpg", "droodleExamples/droodleExample2.jpg", "droodleExamples/droodleExample3.jpg", "droodleExamples/droodleExample4.jpg"]
 
 for img in images:
     if not os.path.isfile(img):
@@ -34,7 +35,7 @@ for img in images:
     else:
         print(f"File found: {img}")
 
-logging.basicConfig(level=logging.INFO) #config logging
+init_logging(console_level = logging.INFO) #config logging
 load_dotenv() #load the .env file
 
 # Initialize a conversation instance for each selected image
@@ -83,29 +84,6 @@ async def handler(websocket, path):
             
             # Automatically set `imagePath` based on `current_image`
             imagePath = current_image  # Always use the current image
-
-            # # Handle the "save_and_reset" command from the frontend
-            # if command == "save_and_reset":
-            #     save_conversation_to_session()
-
-            #     # Save the current conversation
-            #     current_conversation.makeConversationSave()
-            #     print(f"\n[red]System> Conversation for {current_image} saved.[/red]")
-
-            #     # Update to the next image and corresponding conversation
-            #     current_image_index = (current_image_index + 1) % len(images)  # Cycle to the next image
-            #     current_image = images[current_image_index]
-            #     current_conversation = conversations[os.path.basename(current_image)]
-
-            #     initial_message = "Hello! I’m your AI guide for building a doodle caption. I’m designed to ask you questions and guide your reasoning but if you want to take control of your own creative process, I’ll be happy to help wherever possible."
-            #     current_conversation.insertMessage(initial_message, "assistant")
-
-            #     # Notify the frontend about the image switch and reset
-            #     await websocket.send(json.dumps({
-            #         "status": "conversation_reset",
-            #         "image": current_image
-            #     }))
-            #     continue
 
             # Handle the "save_and_reset" command from the frontend
             if command == "save_and_reset":
@@ -189,59 +167,6 @@ async def handler(websocket, path):
                     await websocket.send(json.dumps(response))
                     break
 
-                # elif userInput.startswith("/switch_image"):
-                #     # Manually switch to a new image conversation if requested
-                #     current_image_index = data["switch_image"]
-                #     current_image = images[current_image_index]
-                #     current_conversation = conversations[os.path.basename(current_image)]
-                #     imagePath = current_image  # Update imagePath to the new current image
-                    
-                #     # Notify the frontend about the image switch
-                #     await websocket.send(json.dumps({
-                #         "status": "image_switched",
-                #         "image": current_image
-                #     }))
-                #     continue
-
-                # elif userInput.startswith("/switch_image"):
-                #     # Manually switch to a new image conversation if requested
-                #     new_index = data.get("switch_image")  # Retrieve the new index from the frontend
-                #     if new_index is not None and 0 <= new_index < len(images):  # Validate the new index
-                #         current_image_index = new_index
-                #         current_image = images[current_image_index]  # Update the current image
-                #         current_conversation = conversations[os.path.basename(current_image)]  # Update the conversation
-                #         logging.info(f"Switched to image: {current_image}, Index: {current_image_index}")
-                        
-                #         # Notify the frontend about the image switch
-                #         await websocket.send(json.dumps({
-                #             "status": "image_switched",
-                #             "image": current_image
-                #         }))
-                #     else:
-                #         logging.warning(f"Invalid switch_image index: {new_index}")
-                #     continue
-                
-                # elif userInput.startswith("/switch_image"):
-                #     new_index = data["switch_image"]
-                #     current_image_index = new_index
-                #     current_image = images[current_image_index]
-                #     # current_conversation = conversations[os.path.basename(current_image)]
-                #     current_conversation = modularConversation(  # Reinitialize conversation
-                #         "gpt-4o",
-                #         constantPrompt,
-                #         modularPrompt,
-                #         controlPrompts,
-                #         os.path.basename(current_image)
-                #     )
-                #     logging.info(f"Switched to image: {current_image}, Index: {current_image_index}")
-                    
-                #     # Send acknowledgment to the frontend
-                #     await websocket.send(json.dumps({
-                #         "status": "image_switched",
-                #         "image": current_image,
-                #         "index": current_image_index
-                #     }))
-
                 elif userInput.startswith("/switch_image"):
                     new_index = data.get("switch_image")
                     if new_index is not None and 0 <= new_index < len(images):  # Validate index
@@ -279,9 +204,13 @@ async def handler(websocket, path):
                     }
                     await websocket.send(json.dumps(response))
                     continue
+            
+            timestamp = getTimeStamp()
+            userMessage = encodeMessageInternal(userInput, timestamp, "user", "LLM", imagePath)
 
             # Process the conversation using the automatically set imagePath
-            output = current_conversation.contConversation(userInput, imagePath)
+            outputDict = await current_conversation.contConversationDict(userMessage)
+            output = outputDict.get("content", "")
 
             save_conversation_to_session()
 
@@ -296,7 +225,9 @@ async def handler(websocket, path):
             # Send the assistant's response back to the frontend
             await websocket.send(json.dumps(response))
 
-        except websockets.ConnectionClosed:
+        except websockets.ConnectionClosed as e:
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            logging.warning(f"Connection closed on line {exc_tb.tb_lineno}")
             break
 
 # Start the WebSocket server
