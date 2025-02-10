@@ -10,6 +10,7 @@ import re #used to do a better extraction from controller responses
 import logging #used to log errors and notes
 import time #used to time total system responses
 import asyncio #used to call async functions
+import functools #used to wrap functions
 
 class module(Enum):
     PLAY  = 0
@@ -85,7 +86,7 @@ class modularConversation(standardConversation):
             agent_prompt = [controlPrompts[1], modulePrompts[indevModule.value]]
             agent = asyncConversation(lowerModel, agent_prompt, agent_name, savePath, self._tokenTracker)
             self._argument_agents.append(agent)
-    
+
     #DECISION MAKING--------------------------------------------------------
 
     #Get the arguments for each module, speaking to each argument agent
@@ -125,7 +126,7 @@ class modularConversation(standardConversation):
         return agent.contConversationDict(message)
     
     #Retrive the controller given by the index and get their decision
-    def decideSwitch(self) -> module:
+    async def decideSwitch(self) -> module:
         #Get the chat history
         message = self.getConversationStr()
 
@@ -135,7 +136,7 @@ class modularConversation(standardConversation):
 
         #get arguments
         possibleModules = self.allModules()
-        arguments = asyncio.run(self.get_module_arguments(possibleModules))
+        arguments = await self.get_module_arguments(possibleModules)
 
         #put all the arguments in one string
         argumentStr = ""
@@ -172,11 +173,11 @@ class modularConversation(standardConversation):
             self._recordHistory() #add the history in
     
     #Main function for continuing the conversation using a message dict object
-    def contConversationDict(self, newMessage: dict) -> dict:
+    async def contConversationDict(self, newMessage: dict) -> dict:
         startTime = time.time() #start the timer
 
         self.insertMessageDict(newMessage) #Add new message
-        self._switchStateUnbounded() #Switch the state
+        await self._switchStateUnbounded() #Switch the state
         outMessage = self.turnoverConversationDict()
 
         logging.info("TOTAL RESPONSE TIME: "+str(time.time()-startTime))
@@ -215,11 +216,11 @@ class modularConversation(standardConversation):
             return self._history[module_in][-1]
 
     #switches the state to another module
-    def _switchStateUnbounded(self) -> bool:
+    async def _switchStateUnbounded(self) -> bool:
         #Try to get state to switch to
         try:
-            toModule = self.decideSwitch()
-        except conversationErrors.moduleExtractError or conversationErrors.SwitchOutOfBoundsError:
+            toModule = await self.decideSwitch()
+        except (conversationErrors.moduleExtractError, conversationErrors.SwitchOutOfBoundsError):
             logging.warning("Error in switching state, keeping current state")
             return False
         

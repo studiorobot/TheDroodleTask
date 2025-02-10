@@ -219,7 +219,7 @@ class standardConversation:
                 raise conversationErrors.ImproperMessageStructError("Message is missing key: " + key)
 
         #Check that the message has the right values
-        if not message.get("role") in ("user", "assistant", "system"):
+        if not message.get("role") in ("user", "assistant", "system", "caption"):
             raise conversationErrors.ImproperMessageStructError("Invalid role given")
         if not message.get("assistant_type") in ("LLM", "human", "controller"):
             raise conversationErrors.ImproperMessageStructError(message.get("assistant_type") + " is not a valid assistant type")
