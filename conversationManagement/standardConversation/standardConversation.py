@@ -53,14 +53,14 @@ class standardConversation:
 
         #If the client requires the umich API to be used, access it that way. Otherwise, open the standard openAI API
         if self._usingUmichApi:
-            logging.info("Using the umich API")
+            logging.info(f"Using the umich API for {conversationName}")
             self._client = AzureOpenAI(
                 api_version= os.getenv("UMICH_API_VERSION"), 
                 azure_endpoint=os.getenv("UMICH_API_ENDPOINT"), 
                 organization = os.getenv("UMICH_API_SHORTCODE"), 
                 api_key = os.getenv("UMICH_API_KEY")) 
         else:
-            logging.info("Using the standard openAI API")
+            logging.info(f"Using the standard openAI API for {conversationName}")
             self._client = OpenAI()
 
         #Clear the temp conversation save file

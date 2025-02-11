@@ -229,30 +229,30 @@ class modularConversation(standardConversation):
         logging.info("Switched to module: "+toModule.name)
         return True
     
-    def makeConversationSave(self, savePath=None):
+    def makeConversationSave(self, permFilePath=None):
         # If savePath is not provided, use the original behavior
-        if savePath is None:
+        if permFilePath is None:
             parent_save_path = os.path.dirname(self._savePath)
-            savePath = os.path.join(parent_save_path, "modularConversation - " + self._conversationName + self._idNumber)
+            permFilePath = os.path.join(parent_save_path, "modularConversation - " + self._conversationName + self._idNumber)
         
-        os.makedirs(savePath, exist_ok=True)  # Ensure the directory exists
+        os.makedirs(permFilePath, exist_ok=True)  # Ensure the directory exists
 
         # Save the core conversation
-        super().makeConversationSave(savePath)
+        super().makeConversationSave(permFilePath)
 
         # Save the controller
-        self._controller.makeConversationSave(savePath)
+        self._controller.makeConversationSave(permFilePath)
 
         # Save the speaking agents
         for agent in self._speaking_agents:
-            agent.makeConversationSave(savePath)
+            agent.makeConversationSave(permFilePath)
 
         # Save the argument agents
         for agent in self._argument_agents:
-            agent.makeConversationSave(savePath)
+            agent.makeConversationSave(permFilePath)
             
         # Save the log
-        logPath = os.path.join(savePath, "main_log"+ self._idNumber +".log")
+        logPath = os.path.join(permFilePath, "main_log"+ self._idNumber +".log")
 
         # Retrieve log stream from logging
         log_stream = None
