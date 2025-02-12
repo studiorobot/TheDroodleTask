@@ -99,7 +99,7 @@ async def handler(websocket):
                 current_image = images[current_image_index]
                 current_conversation = conversations[os.path.basename(current_image)]
 
-                initial_message = "Hello! I’m your AI guide for building a doodle caption. I’m designed to ask you questions and guide your reasoning but if you want to take control of your own creative process, I’ll be happy to help wherever possible."
+                initial_message = "Hello! I’m your creative assistant for building a doodle caption. I’m here to ask you questions and guide your reasoning but if you want to take control of your own creative process, I’ll be happy to help wherever possible."
                 current_conversation.insertMessage(initial_message, "assistant")
 
                 # Notify the frontend about the image switch and reset
