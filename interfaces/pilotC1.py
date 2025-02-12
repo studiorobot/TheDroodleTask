@@ -109,7 +109,7 @@ async def handler(websocket):
                 }))
                 continue
 
-            elif command == "submit_caption":
+            if command == "submit_caption":
                 caption_text = data.get("caption", "")
                 image_index = data.get("imageIndex", -1)
                 
@@ -128,20 +128,20 @@ async def handler(websocket):
                         "status": "error",
                         "message": "Invalid caption or image index."
                     }))
-            else:
-                # Process the conversation using the automatically set imagePath
-                timestamp = getTimeStamp()
-                userMessage = encodeMessageInternal(userInput, timestamp, "user", "LLM", imagePath)
-                outputDict = await current_conversation.contConversationDict(userMessage)
-                output = outputDict.get("content", "")
+            # else:
+            # Process the conversation using the automatically set imagePath
+            timestamp = getTimeStamp()
+            userMessage = encodeMessageInternal(userInput, timestamp, "user", "LLM", imagePath)
+            outputDict = await current_conversation.contConversationDict(userMessage)
+            output = outputDict.get("content", "")
 
-                # Create a response with metadata (index, role, timestamp)
-                response = {
-                    "index": current_image_index,  # Index of the current image
-                    "role": "assistant",
-                    "message": output,
-                    "timestamp": str(datetime.now())
-                }
+            # Create a response with metadata (index, role, timestamp)
+            response = {
+                "index": current_image_index,  # Index of the current image
+                "role": "assistant",
+                "message": output,
+                "timestamp": str(datetime.now())
+            }
 
             # Send the assistant's response back to the frontend
             await websocket.send(json.dumps(response))
