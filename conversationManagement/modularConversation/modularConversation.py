@@ -33,7 +33,7 @@ class module(Enum):
         return self == module.AIDING
 
 class modularConversation(standardConversation):
-    def __init__(self, model: str, constantPrompt: list[str], modulePrompts: list[str], controlPrompts: list[str], conversationName: str, savePath: str = 'conversationArchive', imageFeatures: str = "", lowerModel: str = "gpt-4o-mini"):
+    def __init__(self, model: str, constantPrompt: list[str], modulePrompts: list[str], controlPrompts: list[str], conversationName: str, savePath: str = 'conversationArchive', imageFeatures: str = "", lowerModel: str = "gpt-4o-mini", timeFlattening: int = 0):
         #Make some invariant assertions
         if len(modulePrompts) != len(module):
             raise conversationErrors.ImproperPromptFormatError("Module prompts must be equal to the number of modules")
@@ -50,7 +50,7 @@ class modularConversation(standardConversation):
             os.mkdir(savePath)
 
         #Init parent class
-        super().__init__(model = model, prompts = constantPrompt + modulePrompts, conversationName = conversationName, savePath = savePath, tokenTracker = tokenTracker())
+        super().__init__(model = model, prompts = constantPrompt + modulePrompts, conversationName = conversationName, savePath = savePath, tokenTracker = tokenTracker(), timeFlattening= timeFlattening)
         
         self._constantPrompt = constantPrompt #prompts that hold true always
         self._modulePrompts = modulePrompts #prompts that switch out
@@ -181,6 +181,7 @@ class modularConversation(standardConversation):
         outMessage = self.turnoverConversationDict()
 
         logging.info("TOTAL RESPONSE TIME: "+str(time.time()-startTime))
+        self._flattenTime(startTime) #flatten the time
         return outMessage
     
     #Get a response from the LLM and store it without a human input, modified to use multiple agents

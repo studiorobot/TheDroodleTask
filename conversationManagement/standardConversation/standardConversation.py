@@ -12,6 +12,7 @@ from datetime import datetime #used to retrieve date
 import json #used to store messages in json files
 import logging #used to log messages
 import time #used to time api responses
+import random #used to add randomness to the time flattening
 
 from conversationManagement.conversationTools.conversationTools import encodeMessage, encodeMessageInternal, getTimeStamp, makeID, removeImgInConv #tools for conversation
 from ..conversationTools import conversationErrors #error handling
@@ -19,7 +20,7 @@ from ..conversationTools.tokenTracker import tokenTracker #token tracking for ap
 
 class standardConversation:
 
-    def __init__(self, model: str, prompts: list[str], conversationName: str, savePath: str = 'conversationArchive', tokenTracker: tokenTracker = None):
+    def __init__(self, model: str, prompts: list[str], conversationName: str, savePath: str = 'conversationArchive', tokenTracker: tokenTracker = None, timeFlattening: int = 0):
         #Make some invariant assertions
         if not isinstance(prompts, list):
             raise conversationErrors.ImproperPromptFormatError("Prompts must be in a list")
@@ -32,6 +33,7 @@ class standardConversation:
         self._conversationName = conversationName
         self._idNumber = makeID()
         self._savePath = savePath
+        self._timeFlattening = timeFlattening
         self._tempFilePath = "./" + savePath + "/" + conversationName + " - temp.json"
         self._conversation = [] #important conversation variable for openAI
         self._conversationInternal = [] #conversation variable for our storage
@@ -79,8 +81,10 @@ class standardConversation:
 
     #Main function for continuing the conversation using a message dict object
     def contConversationDict(self, newMessage: dict) -> dict:
+        startTime = time.time() #start timer
         self.insertMessageDict(newMessage) #Add new message
         outMessage = self.turnoverConversationDict()
+        self._flattenTime(startTime) #Flatten time if needed
         return outMessage
     
     #Get a response from the LLM and store it without a human input
@@ -223,3 +227,13 @@ class standardConversation:
             raise conversationErrors.ImproperMessageStructError("Invalid role given")
         if not message.get("assistant_type") in ("LLM", "human", "controller"):
             raise conversationErrors.ImproperMessageStructError(message.get("assistant_type") + " is not a valid assistant type")
+
+    #Given the start time of the request, this function will flatten the time to be within a certain range of the goal time 
+    def _flattenTime(self, startTime: float, noise = 4) -> str:
+        timeElapsed = time.time() - startTime
+        targetWait = random.uniform(self._timeFlattening - noise, self._timeFlattening + noise)
+        
+        #Check to see if function needs to be waited
+        if timeElapsed < targetWait and self._timeFlattening > 0:
+            logging.info(f"Flattening time by {targetWait - timeElapsed} seconds")
+            time.sleep(targetWait - timeElapsed)

@@ -55,7 +55,7 @@ for image_path in images:
     
     # Use only the filename as the identifier for each conversation
     image_name = os.path.basename(image_path)  # Extract the filename from the path
-    conversations[image_name] = modularConversation("gpt-4o", constantPrompt, modularPrompt, controlPrompts, image_name)
+    conversations[image_name] = modularConversation("gpt-4o", constantPrompt, modularPrompt, controlPrompts, image_name, timeFlattening = 20)
 
 # Global variables to keep track of the current image and conversation instance
 current_image_index = 0

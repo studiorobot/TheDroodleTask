@@ -3,6 +3,8 @@ import asyncio #used to make async functions
 import aiohttp #used to make async requests
 import logging #used to log messages
 import time #used to time api responses
+from openai import AsyncOpenAI, AsyncAzureOpenAI #GPT resources
+import os #used to access environment variables
 
 from conversationManagement.conversationTools.conversationTools import encodeMessageInternal, getTimeStamp #tools for conversation
 from conversationManagement.conversationTools import conversationErrors #error handling
@@ -11,6 +13,15 @@ from conversationManagement.conversationTools.tokenTracker import tokenTracker #
 class asyncConversation(standardConversation):
     def __init__(self, model: str, prompts: list[str], conversationName: str, savePath: str = 'conversationArchive', tokenTracker: tokenTracker = None):
         super().__init__(model, prompts, conversationName, savePath, tokenTracker)
+        if self._usingUmichApi:
+            self._clientAsync = AsyncAzureOpenAI(
+                api_version= os.getenv("UMICH_API_VERSION"), 
+                azure_endpoint=os.getenv("UMICH_API_ENDPOINT"), 
+                organization = os.getenv("UMICH_API_SHORTCODE"), 
+                api_key = os.getenv("UMICH_API_KEY")) 
+        else:
+            logging.info(f"Using the standard openAI API for {conversationName}")
+            self._clientAsync = AsyncOpenAI()
     
     #Async version of the make request function
     async def _asyncMakeRequest(self, tempConversation: list[dict] = None, model: str = None) -> str:
@@ -31,23 +42,8 @@ class asyncConversation(standardConversation):
 
         startTime = time.time()
 
-        if self._usingUmichApi:
-            raise conversationErrors.slowDownError("Umich API not supported for asyncConversation")\
-        
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                "https://api.openai.com/v1/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {self._client.api_key}",
-                    "Content-Type": "application/json"
-                },
-                json={
-                    "model": model,
-                    "messages": tempConversation
-                }
-            ) as response:
-                response_json = await response.json()
-                output = response_json['choices'][0]['message']['content']
+        outputRaw = await self._clientAsync.chat.completions.create(model = model, messages = tempConversation)
+        output = outputRaw.choices[0].message.content
         
         duration = time.time() - startTime
         duration_str = f"{duration:.2f} seconds"
