@@ -19,10 +19,14 @@
     text-align: right;
   }
   
-  .chat-message.assistant {
+  .chat-message.assistant, .chat-message.mentor {
     text-align: left;
   }
   
+  /* .chat-message.assistant {
+    text-align: left;
+  } */
+
   .chat-message span {
     display: inline-block;
     padding: 10px;
@@ -35,9 +39,14 @@
     color: white;
   }
   
-  .chat-message.assistant span {
+  .chat-message.assistant span, .chat-message.mentor span {
     background-color: #2975c17b;
   }
+
+  /* .chat-message.assistant span {
+    background-color: #2975c17b;
+  }
+   */
   
   .chat-input {
     display: flex;

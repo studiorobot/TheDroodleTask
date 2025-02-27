@@ -68,10 +68,20 @@ connected_mentors = set()  # Stores WebSocket connections for Mentors
 # Initialize a grammar correction conversation using standardConversation
 grammar_correction_agent = standardConversation(
     model="gpt-4o",
-    prompts=["You are a grammar correction assistant. Refine the grammar of the following message while keeping the tone and intent unchanged."],
+    prompts=["You are a grammar correction assistant. Refine the grammar of the following message while keeping the tone and intent unchanged. Your message should be exactly like mine but without any grammar mistakes. If I say something completely nonesense, then don't change it."],
     conversationName="grammar_correction",
     savePath="conversationArchive"
 )
+
+# Add this line after initializing conversations
+messages = {os.path.basename(image): [] for image in images}
+
+def save_messages_to_json(image_name):
+    global session_dir, messages
+    file_path = os.path.join(session_dir, f"{image_name}.json")
+    with open(file_path, 'w') as file:
+        json.dump(messages[image_name], file, indent=4)
+    print(f"Conversation for {image_name} saved to {file_path}")
 
 # Helper function for broadcasting messages
 async def broadcast(message, recipients):
@@ -96,9 +106,9 @@ def correct_grammar(message):
     return corrected_message
 
 # WebSocket handlers
-async def user_handler(websocket, path):
+async def user_handler(websocket):
     """WebSocket Server for User."""
-    global current_image_index
+    global current_image_index, current_image, current_conversation
     connected_users.add(websocket)
     print("User connected.")
 
@@ -110,13 +120,21 @@ async def user_handler(websocket, path):
             data = json.loads(message)
             command = data.get("command", "")
             user_message = data.get("message", "")
+            caption = data.get("caption", "")
 
             if command == "save_and_reset":
                 direction = data.get("direction", "next")
+
+                save_messages_to_json(os.path.basename(current_image))
+
                 if direction == "next":
                     current_image_index = (current_image_index + 1) % len(images)
                 elif direction == "previous":
                     current_image_index = (current_image_index - 1 + len(images)) % len(images)
+
+                # Update to the next image and corresponding conversation
+                current_image = images[current_image_index]
+                current_conversation = conversations[os.path.basename(current_image)]
 
                 # Notify mentors of the new image index
                 await broadcast({
@@ -125,10 +143,36 @@ async def user_handler(websocket, path):
                 }, connected_mentors)
 
             elif user_message:
+
+                # Append user message to messages list
+                messages[os.path.basename(current_image)].append({
+                    "role": "user",
+                    "message": user_message,
+                    "timestamp": str(datetime.now())
+                })
+                
                 # Broadcast the user's message to mentors
                 await broadcast({
                     "role": "user",
                     "message": user_message,
+                    "timestamp": str(datetime.now())
+                }, connected_mentors)
+
+            elif caption:
+                # Prepend "SUBMITTED CAPTION: " to the caption
+                full_caption = f"SUBMITTED CAPTION: {caption}"
+
+                # Append caption to messages list as a user message
+                messages[os.path.basename(current_image)].append({
+                    "role": "user",
+                    "message": full_caption,
+                    "timestamp": str(datetime.now())
+                })
+                
+                # Broadcast the caption to mentors as a user message
+                await broadcast({
+                    "role": "user",
+                    "message": full_caption,
                     "timestamp": str(datetime.now())
                 }, connected_mentors)
 
@@ -137,7 +181,8 @@ async def user_handler(websocket, path):
     finally:
         connected_users.discard(websocket)
 
-async def mentor_handler(websocket, path):
+async def mentor_handler(websocket):
+    global current_image, current_conversation
     connected_mentors.add(websocket)
     print("Mentor connected.")
 
@@ -153,12 +198,31 @@ async def mentor_handler(websocket, path):
             # Use the grammar correction agent with correct function call
             corrected_message = grammar_correction_agent.contConversation(mentor_message)
 
+            # Append mentor message and corrected message to messages list
+            messages[os.path.basename(current_image)].append({
+                "role": "mentor",
+                "message": mentor_message,
+                "timestamp": str(datetime.now())
+            })
+            messages[os.path.basename(current_image)].append({
+                "role": "grammarcorrection",
+                "message": corrected_message,
+                "timestamp": str(datetime.now())
+            })
+
             # Broadcast the corrected message to users
             await broadcast({
                 "role": "mentor",
                 "message": corrected_message,
                 "timestamp": str(datetime.now())
             }, connected_users)
+
+            # Send the corrected message back to the mentor
+            await websocket.send(json.dumps({
+                "role": "grammarcorrection",
+                "message": corrected_message,
+                "timestamp": str(datetime.now())
+            }))
 
     except websockets.ConnectionClosed:
         print("Mentor disconnected.")
@@ -169,6 +233,12 @@ async def mentor_handler(websocket, path):
 async def main():
     user_server = await websockets.serve(user_handler, "localhost", 8765, ping_interval=None)
     mentor_server = await websockets.serve(mentor_handler, "localhost", 8766, ping_interval=None)
+
+    # user_server = await websockets.serve(user_handler, "0.0.0.0", 8765, ping_interval=None)
+    # mentor_server = await websockets.serve(mentor_handler, "0.0.0.0", 8766, ping_interval=None)
+
+    # user_server = await websockets.serve(user_handler, "0.0.0.0", 8765)
+    # mentor_server = await websockets.serve(mentor_handler, "0.0.0.0", 8766)
 
     print("WebSocket servers started.")
     await asyncio.gather(user_server.wait_closed(), mentor_server.wait_closed())

@@ -58,7 +58,7 @@ function App() {
   // Establish WebSocket connection for mentor
   useEffect(() => {
     websocket.current = new WebSocket("ws://localhost:8766");
-    // websocket.current = new WebSocket('ws://35.3.240.223:8766'); // For mentor
+    // websocket.current = new WebSocket('ws://35.3.184.234:8766');
 
     websocket.current.onmessage = (event) => {
       const data = JSON.parse(event.data);
@@ -99,6 +99,7 @@ function App() {
           websocketRef={websocket}
           currentImageIndex={currentImageIndex}
           chatHistories={chatHistories}
+          setChatHistories={setChatHistories}
         />
       </div>
       <div className="right-pane">

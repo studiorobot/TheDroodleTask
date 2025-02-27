@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import '../styles/ChatWindow.css';
 
-const initialMessage = "Hello! I’m your creative assistant for building a doodle caption. I’m here to ask you questions and guide your reasoning but if you want to take control of your own creative process, I’ll be happy to help wherever possible.";
+// const initialMessage = "Hello! I’m your creative assistant for building a droodle caption. I’m here to ask you questions and guide your reasoning but if you want to take control of your own creative process, I’ll be happy to help wherever possible.";
+const initialMessage = "Hello! I'm your collaborator for building a droodle caption.";
 
 function ChatWindow({ currentImageIndex }) {
   const [chatHistories, setChatHistories] = useState({
@@ -14,6 +15,7 @@ function ChatWindow({ currentImageIndex }) {
 
   useEffect(() => {
     websocket.current = new WebSocket('ws://localhost:8765');
+    // websocket.current = new WebSocket("ws://35.3.184.234:8765");
 
     websocket.current.onmessage = (event) => {
       const data = JSON.parse(event.data);
@@ -50,6 +52,7 @@ function ChatWindow({ currentImageIndex }) {
         { sender: 'assistant', text: initialMessage }
       ],
     }));
+    setLoading(false); // Reset loading state when image index changes
   }, [currentImageIndex]);
 
   const currentChatHistory = chatHistories[currentImageIndex] || [];
@@ -88,7 +91,7 @@ function ChatWindow({ currentImageIndex }) {
         ))}
         {loading && (
           <div className="chat-message assistant">
-            <span>Thinking...</span>
+            <span>...</span>
           </div>
         )}
         <div ref={lastMessageRef} />

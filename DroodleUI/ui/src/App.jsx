@@ -11,6 +11,7 @@ function App() {
   // Establish WebSocket connection
   useEffect(() => {
     websocket.current = new WebSocket('ws://localhost:8765');
+    // websocket.current = new WebSocket("ws://35.3.184.234:8765");
 
     // Clean up the WebSocket connection on unmount
     return () => {

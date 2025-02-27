@@ -5,3 +5,4 @@ rich
 prompt_toolkit
 websockets
 asyncio
+aiohttp
