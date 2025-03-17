@@ -1,5 +1,6 @@
 import os #Used to manipulate paths and pull files
 import sys #Uses to access modules
+import random #Used to randomize the order of images
 
 sys.path.append(os.path.abspath('..'))
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) #Set the working directory to the parent directory
@@ -18,16 +19,44 @@ import logging #used to log messages
 init_logging(console_level= logging.INFO) #initialize logging
 load_dotenv() #load the .env file
 
+# Load server IP from config.json
+with open('config.json', 'r') as config_file:
+    config = json.load(config_file)
+
+server_ip = config['server_ip']
+
+
 # Define the specific images you want to use from the directory
 images = ["droodleExamples/droodleExample1.jpg", "droodleExamples/droodleExample2.jpg", "droodleExamples/droodleExample3.jpg", "droodleExamples/droodleExample4.jpg"]
 
+image_dict = {
+    "droodleExamples/droodleExample1.jpg": "abstractImage1",
+    "droodleExamples/droodleExample2.jpg": "abstractImage2",
+    "droodleExamples/droodleExample3.jpg": "abstractImage3",
+    "droodleExamples/droodleExample4.jpg": "abstractImage4"
+}
+# Randomize the order of images
+random.shuffle(images)
+
+jsx_images = []
+
 for img in images:
-    if not os.path.isfile(img):
-        logging.info(f"File not found: {img}")
-    else:
-        logging.info(f"File found: {img}")
+    jsx_images.append(image_dict[img])
 
+print(f"{jsx_images};")
 
+config['jsx_images'] = jsx_images
+
+with open('config.json', 'w') as config_file:
+    json.dump(config, config_file, indent=4)
+
+# for img in images:
+#     if not os.path.isfile(img):
+#         logging.info(f"File not found: {img}")
+#     else:
+#         logging.info(f"File found: {img}")
+
+''
 # Prompt for session name
 session_name = input("Enter the session name: ").strip()
 if not session_name:
@@ -151,7 +180,8 @@ async def handler(websocket):
 
 # Start the WebSocket server
 async def main():
-    async with websockets.serve(handler, "localhost", 8765):
+    # async with websockets.serve(handler, "localhost", 8765):
+    async with websockets.serve(handler, server_ip, 8765):
         await asyncio.Future()  # Run WebSocket server forever
 
 if __name__ == "__main__":

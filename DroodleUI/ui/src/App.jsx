@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import ChatWindow from './components/ChatWindow';
 import ImageDisplay from './components/ImageDisplay';
 import './styles/App.css';
+import config from '../../../config.json';
 
 function App() {
   // State to track the current image index
@@ -10,8 +11,12 @@ function App() {
 
   // Establish WebSocket connection
   useEffect(() => {
-    websocket.current = new WebSocket('ws://localhost:8765');
-    // websocket.current = new WebSocket("ws://35.3.184.234:8765");
+    const serverIp = config.server_ip;
+    console.log('Server IP:', serverIp);
+
+    websocket.current = new WebSocket(`ws://${serverIp}:8765`);
+    // websocket.current = new WebSocket('ws://localhost:8765');
+    // websocket.current = new WebSocket("ws://35.3.160.14:8765");
 
     // Clean up the WebSocket connection on unmount
     return () => {

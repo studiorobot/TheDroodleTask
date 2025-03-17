@@ -49,6 +49,7 @@ import React, { useState, useRef, useEffect } from "react";
 import ChatWindow from "./components/ChatWindow";
 import ImageDisplay from "./components/ImageDisplay";
 import "./styles/App.css";
+import config from '../../../config.json';
 
 function App() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -57,7 +58,11 @@ function App() {
 
   // Establish WebSocket connection for mentor
   useEffect(() => {
-    websocket.current = new WebSocket("ws://localhost:8766");
+    const serverIp = config.server_ip;
+    console.log('Server IP:', serverIp);
+
+    websocket.current = new WebSocket(`ws://${serverIp}:8766`);
+    // websocket.current = new WebSocket("ws://localhost:8766");
     // websocket.current = new WebSocket('ws://35.3.184.234:8766');
 
     websocket.current.onmessage = (event) => {
@@ -91,6 +96,52 @@ function App() {
       }
     };
   }, [currentImageIndex]);
+
+  // useEffect(() => {
+  //   const fetchConfig = async () => {
+  //     const response = await fetch('../../../config.json');
+  //     const config = await response.json();
+  //     const serverIp = config.server_ip;
+  //     websocket.current = new WebSocket(`ws://${serverIp}:8766`);
+
+  //     websocket.current.onmessage = (event) => {
+  //       const data = JSON.parse(event.data);
+  //       if (data.status === "image_update") {
+  //         const newImageIndex = data.imageIndex;
+  //         setCurrentImageIndex(newImageIndex);
+
+  //         // Update chat histories if provided
+  //         if (data.chatHistory) {
+  //           setChatHistories((prevHistories) => ({
+  //             ...prevHistories,
+  //             [newImageIndex]: data.chatHistory,
+  //           }));
+  //         }
+  //       } else if (data.role === "user" || data.role === "mentor") {
+  //         // Append message to the current droodle's chat history
+  //         setChatHistories((prevHistories) => ({
+  //           ...prevHistories,
+  //           [currentImageIndex]: [
+  //             ...(prevHistories[currentImageIndex] || []),
+  //             { sender: data.role, text: data.message },
+  //           ],
+  //         }));
+  //       }
+  //     };
+
+  //     websocket.current.onclose = () => {
+  //       console.log('WebSocket connection closed');
+  //     };
+  //   };
+
+  //   fetchConfig();
+
+  //   return () => {
+  //     if (websocket.current) {
+  //       websocket.current.close();
+  //     }
+  //   };
+  // }, [currentImageIndex]);
 
   return (
     <div className="app-container">

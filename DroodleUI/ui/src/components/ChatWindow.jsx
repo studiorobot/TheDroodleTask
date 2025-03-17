@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import '../styles/ChatWindow.css';
+import config from '../../../../config.json';
 
 // const initialMessage = "Hello! I’m your creative assistant for building a droodle caption. I’m here to ask you questions and guide your reasoning but if you want to take control of your own creative process, I’ll be happy to help wherever possible.";
 const initialMessage = "Hello! I'm your collaborator for building a droodle caption.";
@@ -14,8 +15,12 @@ function ChatWindow({ currentImageIndex }) {
   const lastMessageRef = useRef(null);
 
   useEffect(() => {
-    websocket.current = new WebSocket('ws://localhost:8765');
-    // websocket.current = new WebSocket("ws://35.3.184.234:8765");
+    const serverIp = config.server_ip;
+    console.log('Server IP:', serverIp);
+
+    websocket.current = new WebSocket(`ws://${serverIp}:8765`);
+    // websocket.current = new WebSocket('ws://localhost:8765');
+    // websocket.current = new WebSocket("ws://35.3.160.14:8765");
 
     websocket.current.onmessage = (event) => {
       const data = JSON.parse(event.data);

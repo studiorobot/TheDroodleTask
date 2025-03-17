@@ -1,5 +1,6 @@
 import os #Used to manipulate paths and pull files
 import sys #Uses to access modules
+import random
 
 sys.path.append(os.path.abspath('..'))
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) #Set the working directory to the parent directory
@@ -16,15 +17,34 @@ import json #used to encode and decode json messages
 from datetime import datetime #used to retrieve date and time for file name
 import logging #used to log messages
 
+# Load server IP from config.json
+with open('config.json', 'r') as config_file:
+    config = json.load(config_file)
+server_ip = config['server_ip']
 
 # Define the specific images you want to use from the directory
 images = ["droodleExamples/droodleExample1.jpg", "droodleExamples/droodleExample2.jpg", "droodleExamples/droodleExample3.jpg", "droodleExamples/droodleExample4.jpg"]
 
+image_dict = {
+    "droodleExamples/droodleExample1.jpg": "abstractImage1",
+    "droodleExamples/droodleExample2.jpg": "abstractImage2",
+    "droodleExamples/droodleExample3.jpg": "abstractImage3",
+    "droodleExamples/droodleExample4.jpg": "abstractImage4"
+}
+# Randomize the order of images
+random.shuffle(images)
+
+jsx_images = []
+
 for img in images:
-    if not os.path.isfile(img):
-        print(f"File not found: {img}")
-    else:
-        print(f"File found: {img}")
+    jsx_images.append(image_dict[img])
+
+print(f"{jsx_images};")
+
+config['jsx_images'] = jsx_images
+
+with open('config.json', 'w') as config_file:
+    json.dump(config, config_file, indent=4)
 
 logging.basicConfig(level=logging.INFO) #config logging
 load_dotenv() #load the .env file
@@ -231,8 +251,11 @@ async def mentor_handler(websocket):
 
 # Start the WebSocket server
 async def main():
-    user_server = await websockets.serve(user_handler, "localhost", 8765, ping_interval=None)
-    mentor_server = await websockets.serve(mentor_handler, "localhost", 8766, ping_interval=None)
+    # user_server = await websockets.serve(user_handler, "localhost", 8765, ping_interval=None)
+    # mentor_server = await websockets.serve(mentor_handler, "localhost", 8766, ping_interval=None)
+
+    user_server = await websockets.serve(user_handler, server_ip, 8765, ping_interval=None)
+    mentor_server = await websockets.serve(mentor_handler, server_ip, 8766, ping_interval=None)
 
     # user_server = await websockets.serve(user_handler, "0.0.0.0", 8765, ping_interval=None)
     # mentor_server = await websockets.serve(mentor_handler, "0.0.0.0", 8766, ping_interval=None)

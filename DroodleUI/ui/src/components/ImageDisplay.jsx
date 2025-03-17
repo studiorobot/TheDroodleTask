@@ -6,9 +6,22 @@ import abstractImage1 from '../../../../droodleExamples/droodleExample1.jpg';  /
 import abstractImage2 from '../../../../droodleExamples/droodleExample2.jpg';  // Second image
 import abstractImage3 from '../../../../droodleExamples/droodleExample3.jpg';  // Third image
 import abstractImage4 from '../../../../droodleExamples/droodleExample4.jpg';  // Fourth image
+import config from '../../../../config.json';
 
-function ImageDisplay({ currentImageIndex, setCurrentImageIndex, onImageSwitch, onSubmitCaption }) {
-  const images = [abstractImage1, abstractImage2, abstractImage3, abstractImage4]; // Array of images
+const imageMap = {
+  'abstractImage1': abstractImage1,
+  'abstractImage2': abstractImage2,
+  'abstractImage3': abstractImage3,
+  'abstractImage4': abstractImage4,
+};
+
+function ImageDisplay({ currentImageIndex, setCurrentImageIndex, onImageSwitch, onSubmitCaption, websocket }) {
+  // const images = [abstractImage1, abstractImage2, abstractImage3, abstractImage4]; // Array of images
+  // const images = [abstractImage3, abstractImage4, abstractImage2, abstractImage1];
+  // const imageNames = ['abstractImage3', 'abstractImage4', 'abstractImage2', 'abstractImage1'];
+  const imageNames = config.jsx_images;
+
+  const images = imageNames.map(name => imageMap[name]);
 
   // State to store the rotation, position, and size of each image
   const [imageStates, setImageStates] = useState(() => {
@@ -44,6 +57,7 @@ function ImageDisplay({ currentImageIndex, setCurrentImageIndex, onImageSwitch, 
       );
     }
   }, []); // Runs only once after the first render
+
 
   // Handle rotation based on dragging at corners
   const handleRotateStart = (e) => {
@@ -260,3 +274,8 @@ function ImageDisplay({ currentImageIndex, setCurrentImageIndex, onImageSwitch, 
 }
 
 export default ImageDisplay;
+
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
