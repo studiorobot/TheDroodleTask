@@ -98,7 +98,8 @@ for image_path in images:
         model="gpt-4o",
         prompts=[initial_prompt],  # StandardConversation uses a list of prompts
         conversationName=image_name,
-        savePath="conversationArchive"
+        savePath="conversationArchive",
+        timeFlattening=20
     )
 
 # Global variables to keep track of the current image and conversation instance

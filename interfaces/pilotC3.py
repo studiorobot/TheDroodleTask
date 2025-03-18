@@ -16,6 +16,9 @@ import websockets #used to create a websocket connection
 import json #used to encode and decode json messages
 from datetime import datetime #used to retrieve date and time for file name
 import logging #used to log messages
+import uuid 
+import time #used to manage time
+
 
 # Load server IP from config.json
 with open('config.json', 'r') as config_file:
@@ -114,6 +117,39 @@ async def broadcast(message, recipients):
             disconnected.add(recipient)
     recipients.difference_update(disconnected)
 
+# Global dictionary to store user message timestamps
+user_message_timestamps = {}
+
+# Global variable to store the most recent message_id
+most_recent_message_id = None
+
+# Global variable to specify the minimum wait time in seconds
+minimum_wait_time = 19  # You can adjust this value as needed
+
+# Add this function to handle time flattening based on the user's message timestamp
+# def flatten_time_based_on_user_message(user_message_timestamp, noise=4):
+#     startTime = datetime.strptime(user_message_timestamp, "%Y-%m-%d %H:%M:%S.%f").timestamp()
+#     timeElapsed = time.time() - startTime
+#     targetWait = random.uniform(grammar_correction_agent._timeFlattening - noise, grammar_correction_agent._timeFlattening + noise)
+    
+#     # Check to see if function needs to be waited
+#     if timeElapsed < targetWait and grammar_correction_agent._timeFlattening > 0:
+#         logging.info(f"Flattening time by {targetWait - timeElapsed} seconds")
+#         time.sleep(targetWait - timeElapsed)
+
+def flatten_time_based_on_user_message(user_message_timestamp, noise=4):
+    startTime = datetime.strptime(user_message_timestamp, "%Y-%m-%d %H:%M:%S.%f").timestamp()
+    timeElapsed = time.time() - startTime
+    targetWait = random.uniform(minimum_wait_time - noise, minimum_wait_time + noise)
+    
+    # Print the targetWait value
+    print(f"Target wait time: {targetWait} seconds")
+    
+    # Check to see if function needs to be waited
+    if timeElapsed < targetWait:
+        logging.info(f"Flattening time by {targetWait - timeElapsed} seconds")
+        time.sleep(targetWait - timeElapsed)
+
 # Helper function for grammar correction
 def correct_grammar(message):
     """
@@ -128,7 +164,7 @@ def correct_grammar(message):
 # WebSocket handlers
 async def user_handler(websocket):
     """WebSocket Server for User."""
-    global current_image_index, current_image, current_conversation
+    global current_image_index, current_image, current_conversation, most_recent_message_id
     connected_users.add(websocket)
     print("User connected.")
 
@@ -163,19 +199,34 @@ async def user_handler(websocket):
                 }, connected_mentors)
 
             elif user_message:
+                # Generate a unique ID for the user message
+                message_id = str(uuid.uuid4())
 
+                # Add this line to track the start time
+                user_message_timestamp = datetime.now()
+                print(f"user_message_timestamp: {user_message_timestamp}")
+
+                # Store the timestamp in the global dictionary
+                # user_message_timestamps[user_message] = str(user_message_timestamp)
+                user_message_timestamps[message_id] = str(user_message_timestamp)
+
+                # Update the global variable with the most recent message_id
+                most_recent_message_id = message_id
+                
                 # Append user message to messages list
                 messages[os.path.basename(current_image)].append({
                     "role": "user",
                     "message": user_message,
-                    "timestamp": str(datetime.now())
+                    "timestamp": str(datetime.now()),
+                    "message_id": message_id  # Include the message ID
                 })
                 
                 # Broadcast the user's message to mentors
                 await broadcast({
                     "role": "user",
                     "message": user_message,
-                    "timestamp": str(datetime.now())
+                    "timestamp": str(datetime.now()),
+                    "message_id": message_id  # Include the message ID
                 }, connected_mentors)
 
             elif caption:
@@ -202,7 +253,7 @@ async def user_handler(websocket):
         connected_users.discard(websocket)
 
 async def mentor_handler(websocket):
-    global current_image, current_conversation
+    global current_image, current_conversation, most_recent_message_id
     connected_mentors.add(websocket)
     print("Mentor connected.")
 
@@ -214,6 +265,22 @@ async def mentor_handler(websocket):
             print(f"Message from mentor: {message}")
             data = json.loads(message)
             mentor_message = data.get("message", "")
+            # message_id = data.get("message_id", "")
+
+            print(user_message_timestamps)
+             # Retrieve the user message timestamp from the global dictionary
+            # user_message_timestamp = user_message_timestamps.get(mentor_message, "")
+            print(f"Message ID: {most_recent_message_id}")
+            user_message_timestamp = user_message_timestamps.get(most_recent_message_id, "")
+
+            print(f"user_message_timestamp: {user_message_timestamp}")
+
+            if not user_message_timestamp:
+                print("Error: user_message_timestamp is empty")
+                continue
+
+            # Flatten the time based on the user's message timestamp
+            flatten_time_based_on_user_message(user_message_timestamp)
 
             # Use the grammar correction agent with correct function call
             corrected_message = grammar_correction_agent.contConversation(mentor_message)
