@@ -1,9 +1,9 @@
 {
-    "server_ip": "35.3.160.14",
+    "server_ip": "localhost",
     "jsx_images": [
-        "abstractImage4",
-        "abstractImage2",
         "abstractImage1",
-        "abstractImage3"
+        "abstractImage3",
+        "abstractImage2",
+        "abstractImage4"
     ]
 }

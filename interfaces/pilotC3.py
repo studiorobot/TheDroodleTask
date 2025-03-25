@@ -10,6 +10,7 @@ from dotenv import load_dotenv #used to load the .env file
 from rich import print #update the print function to include more colors
 from conversationManagement.modularConversation.modularConversation import modularConversation #import standard conversation class
 from conversationManagement.standardConversation.standardConversation import standardConversation
+from conversationManagement.statelessConversation.statelessConversation import statelessConversation
 from conversationManagement.conversationTools.conversationTools import splitFileByMarker #import file splitter
 import asyncio #used to run async functions
 import websockets #used to create a websocket connection
@@ -89,11 +90,19 @@ connected_users = set()  # Stores WebSocket connections for Users
 connected_mentors = set()  # Stores WebSocket connections for Mentors
 
 # Initialize a grammar correction conversation using standardConversation
-grammar_correction_agent = standardConversation(
+# grammar_correction_agent = standardConversation(
+#     model="gpt-4o",
+#     prompts=["You are a grammar correction assistant. Refine the grammar of the following message while keeping the tone and intent unchanged. Your message should be exactly like mine but without any grammar mistakes. If I say something completely nonesense, then don't change it."],
+#     conversationName="grammar_correction",
+#     savePath="conversationArchive"
+# )
+
+# Initialize a stateless grammar correction agent
+grammar_correction_agent = statelessConversation(
     model="gpt-4o",
-    prompts=["You are a grammar correction assistant. Refine the grammar of the following message while keeping the tone and intent unchanged. Your message should be exactly like mine but without any grammar mistakes. If I say something completely nonesense, then don't change it."],
-    conversationName="grammar_correction",
-    savePath="conversationArchive"
+    prompts=["You are a grammar corrector. Refine the grammar of the following message while keeping the tone and intent unchanged. Your message should be exactly like mine but without any grammar mistakes. If I say something nonesense or things like 'a;sldhg;alsdhg' that are obviously intentionally typed that way, then don't change it."],
+    conversationName="example_without_history",
+    history=False
 )
 
 # Add this line after initializing conversations
