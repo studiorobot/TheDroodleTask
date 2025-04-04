@@ -91,8 +91,8 @@ class standardConversation:
     def turnoverConversationDict(self) -> dict:
         #Get the last message from storage
         lastMessage = self._conversationInternal[-1]
-        if lastMessage.get("role") != "user":
-            raise conversationErrors.ImproperMessageStructError("Last message in conversation is not a user message")
+        # if lastMessage.get("role") != "user": #REMOVED THIS ERROR CHECK TO SAVE DATA
+        #     raise conversationErrors.ImproperMessageStructError("Last message in conversation is not a user message")
         iterations = 0
 
         #Recursievely try to make a request to the LLM
