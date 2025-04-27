@@ -1,0 +1,107 @@
+A droodle is a simple abstract drawing that “comes into focus” (in a surprising way) with the addition of a clever title. This task is primarily a creative language task in that it draws upon
+people’s ability to use language in witty and creative ways around an image or figure. There is no “correct” droodle caption but some are more creative than others and good droodle captions often come from stories around the image. Using the process below, code the droodle caption given by the user. The captions can be 1. Non-Droodle, 2. Low, 3. Medium, or 4. High
+Your reply must be formatted like this: "<score (1-4)> - <reasoning>" where the reasoning is just a few senences abiut why you picked that score
+
+1. **Initial Reaction**
+    - Determine your initial reaction to the Droodle.
+    - Did you have an “aha” (gestalt experience), “aha, but…” (awkward gestalt experience), or “blah” (no real gestalt experience) response to the title?
+2. **Pattern Matching**
+    - Determine if the Droodle is similar to the prototypic titles provided for each coding category.
+    - **Style and Strategy:** Match the title based on similar strategies or styles (e.g., abstractness or literalness), rather than a literal match. Does the Droodle have a similar style or strategy as any of the prototypic Droodles?
+    - **“Aha” Response:** Match the Droodle in terms of the “aha” experience. Does the title elicit a similar gestalt (“aha”, “aha, but...”, or “blah”) response as any of the prototypic Droodles?
+3. **Categories and Rationale**
+    - Consider the strategies conveyed by the Droodle.
+    - Use the strategies to create a rationale for your initial reaction and not necessarily as a way of challenging your initial reaction.
+4. **Overall Assessment**
+    - Based on the above process, what is your overall assessment of the Droodle?
+    - Code as High, Medium, Low, or Non-Droodle.
+
+More on what the droodle scores mean:
+
+- Non-Droodle (Score = 1) – refers to Droodles that:
+    - lack a title
+    - the title lacks coherence or relevance with regard to the drawing
+    - marginal relevance with the drawing does not depend on the intentional creation of the title at hand (i.e., any randomly generated title could possibly have marginal relevance to the drawing)
+- Low (Score = 2) – refers to Droodles that:
+    - are literal in that the title provides a satisfactory description of the drawing
+    - attempt to convey a Droodle strategy without success
+    - lacks coherence (see section C.2.). When viewing the Droodle, the response is more of a “blah”
+- Medium (Score = 3) – refers to Droodles that:
+    - are somewhat literal but successfully convey a Droodle strategy
+    - are somewhat abstract (see High) and successfully convey a Droodle strategy, but lack the luster or coherence of a High Droodle
+    - may lack coherence (see section C.2.). When viewing the Droodle, the response is more of an “aha, but…” or “okay, sure”
+- High (Score = 4) – refers to Droodles that:
+    - are abstract, meaning that they make use of abstract drawings and successfully convey a Droodle strategy
+    - result in a shift or twist in how one would view the Droodle (may be a literal interpretation following the shift)
+    - have a certain sophistication or surprise
+    - have coherence (see section C.2.). When viewing the Droodle, the response is more of an “aha”
+
+Droodle Strategies:
+
+- Occlusion
+    - Refers to a strategy in which shapes represent something behind something else.
+- Horizon Making
+    - Refers to a strategy in which a straight line is used to create a horizon in the drawing.
+        - The line is often horizontal but may also be drawn at an angle.
+        - The horizon line is used to indicate that the subject of the drawing is:
+            - Behind the horizon (e.g., “duck fishing for food”)
+            - In front of the horizon (e.g., “a cliff-diving amoeba”)
+            - On top of the horizon (e.g., “golf tee in the ground”)
+            - Under the horizon (not part of our prototypic data)
+- Orientation Change
+    - Refers to a strategy in which the Droodle viewer’s perspective is changed by way of a change of orientation of the Droodle viewer to the subject of the Droodle (e.g., from above, side, or below).
+        - Some titles explicitly reveal the orientation, while others must be figured out by the Droodle viewer in order to understand the Droodle.
+- Figurative Exaggeration
+    - Refers to a strategy in which the size or dimension of shapes represent meaning.
+        - Example: In “Supermodel,” the single straight line is an exaggeration (by making thin and rail-like) of the shape of supermodels. (Note: Cultural Reference is also used as a strategy in this Droodle.)
+- Figurative Pun
+    - Refers to a strategy in which an aspect of the drawing is a play on words with a literal representation of concept, phrase, or expression that has an alternative meaning.
+        - Example: In “lay-person’s eyes popping out at UFO,” two puns are used in slightly different ways:
+            - “Lay-person” is represented literally with a person horizontally.
+            - The expression “eyes popping out” is represented literally (as an action) with two dark circles above the head.
+        - Example: In “Two bugs making love in the spring,” “spring” is represented literally as a spring coil which is a pun on Spring, the season.
+- Anthropomorphizing
+    - Refers to a strategy in which the subjects or objects of the drawing are endowed with human qualities or characteristics.
+        - Example: In “Worm taking date to dinner,” the drawing is very figurative (i.e., it is easy to recognize the apple and the worm), but the surprise comes from the combination of a worm doing a very worm-like behavior (eating an apple) with an anthropomorphized behavior (“taking date to dinner”).
+        - Example: In “Clam with Buck Teeth,” the clam’s characteristics (shape) are combined in an amusing way with a human characteristic (“buck teeth”).
+        - Example: In “A cliff-diving amoeba,” an amoeba is endowed with the human behavior of “cliff-diving.”
+            - Note: Pretense is a part of anthropomorphizing, but pretense alone is not a criterion (see e.g., “A picture after an earthquake”).
+- Cultural Reference
+    - Refers to a strategy in which the drawing represents a cultural value, trend, or knowledge of a cultural icon or object in an ironic or humorous manner.
+        - Example: “Supermodel” is a cultural reference that supermodels are very thin and rail-like. (Note: Figurative exaggeration is also used as a strategy in “Supermodel.”)
+- Perspective Change
+    - Unique Perspective
+        - Refers to a strategy in which the Droodle viewer takes on an unusual vantage point.
+            - It is often the case that the perspective is unique because it is viewed through a restricted portal (e.g., window in an armored truck, the opening in a beer can, from the inside of someone’s mouth).
+    - Subject’s Perspective
+        - Refers to a strategy in which the Droodle viewer takes on the perspective of one of the subjects in the Droodle.
+            - Code stringently here; there must be two subjects in the Droodle (either explicit or implied).
+    - Partial View
+        - Refers to a strategy in which the visual space is used in a clever way to convey a portion of a larger scene (the larger scene is made apparent in the title).
+- Interpretation Twist
+    - Refers to a strategy in which the drawing is visually pulling on one interpretation (possibly through recognizable, stereotypic, or iconic images), while the title reveals another altogether surprising interpretation.
+
+Definition of Coherence:
+
+- Coherence
+    - Refers to drawing which have coherence in terms of drawing-title, plausibility, and/or context.
+    - Not Coherent
+        - Drawing-Title
+            - Refers to a lack of symmetry between aspects of the drawing and the title.
+        - Plausibility
+            - Refers to a lack of plausibility of the drawing given the title, or the plausibility is a stretch.
+        - Contextual
+            - Refers to a lack of contextual coherence.
+    - Coherent
+        - Drawing-Title
+            - Refers to the symmetry between the drawing and the title.
+        - Plausibility
+            - Refers to the plausibility of the drawing given the title.
+        - Contextual Coherence
+            - Refers to symmetry between the context of the drawing and the subject matter.
+
+Additional Information:
+The given Droodle pulls strongly for (1) a horizontal orientation because of the horizontal line,
+(2) a conceptualization of the circle as a hole, and (3) an interpretation of an animal or person in
+the hole. Thus if the title reveals a different (1) orientation, (2) conceptualization, or (3)
+interpretation (and it is coherent), it will likely bump up the Droodle into a higher category.

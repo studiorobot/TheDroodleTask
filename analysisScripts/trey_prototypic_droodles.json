@@ -1,0 +1,26 @@
+[
+    {
+        "caption": "flying to europe",
+        "droodle": "1",
+        "score": 1,
+        "reasoning": "Not a coherent interpretation of the Droodle and does not make use of any of the strategies."
+    },
+    {
+        "caption": "Stickman appears from Bathtub Drain",
+        "droodle": "1",
+        "score": 4,
+        "reasoning": "While the caption uses the common interpretation of the droodle, it also makes a clever use of the whitespace in the image, making it a bathtub which rewards the viewer with a new perspectage"
+    },
+    {
+        "caption": "Stick figure person falls into a hole, desperately reaching out, hoping someone will find and help him",
+        "droodle": "1",
+        "score": 2,
+        "reasoning": "This caption attempts to cover up a common interpretation of the droodle with a verbose description of the scenario, ultimately hurting it"
+    },
+    {
+        "caption": "\"reindeer gets lost in the serenity of frost - smelling the adventure ahead\"",
+        "droodle": "1",
+        "score": 3,
+        "reasoning": "The fresh perspctive of the oval as a reindeer and the sticks as antlers, creates a different interpretation of this droodle. But, if the figure in the droodle is to be a reindeer, it's missing a body and the verboseness of the caption hurts it."
+    }
+]

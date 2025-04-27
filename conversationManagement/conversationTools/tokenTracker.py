@@ -5,7 +5,7 @@ from conversationManagement.conversationTools import conversationErrors #error h
 
 #The point of this class is to create a unified object that is in charge of keeping track of token counts so that we don't go over the limit
 class tokenTracker():
-    def __init__(self, tokenLimit = {"gpt-4o": 20000, "gpt-4o-mini": 150000}):
+    def __init__(self, tokenLimit = {"gpt-4o": 20000, "gpt-4o-mini": 150000, "o1": 20000}):
         self._tokenHistory = [] #init token history
         self._tokenLimit = tokenLimit #init token limit
 

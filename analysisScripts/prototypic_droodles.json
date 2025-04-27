@@ -1,0 +1,104 @@
+[
+    {
+        "caption": "A worm that pulled the bird into its hole",
+        "droodle": "1",
+        "score": 3,
+        "reasoning": "This title reveals an unseen element in the Droodle (a worm) that is actively involved in the story-line."
+    },
+    {
+        "caption": "lock!",
+        "droodle": "1",
+        "score": 1,
+        "reasoning": "Not a coherent interpretation of the Droodle and does not make use of any of the strategies."
+    },
+    {
+        "caption": "An ostrich that stuck its head too far in the sand",
+        "droodle": "1",
+        "score": 3,
+        "reasoning": "The title is descriptive and it works, but lacks the abstraction needed for a high."
+    },
+    {
+        "caption": "A Robin backing out of his nest in the tree hole",
+        "droodle": "1",
+        "score": 4,
+        "reasoning": "This title provides a move away from the horizontal pull of this Droodle by rotating the orientation 90°. Furthermore, the narration is not of an animal in captivity, but an animal doing something quite natural."
+    },
+    {
+        "caption": "A bird in a mud puddle",
+        "droodle": "1",
+        "score": 2,
+        "reasoning": "This title provides an interpretation that is out of proportion and thus incoherent. It is not clear how such a seemingly large bird would fit in such a small mud puddle (given the normal shallow depth of a puddle), or exactly how the orientation works."
+    },
+    {
+        "caption": "Person falling into a hole",
+        "droodle": "1",
+        "score": 2,
+        "reasoning": "This title represents that typical characterization of a passive person falling in a hole."
+    },
+    {
+        "caption": "A frog in captivity",
+        "droodle": "1",
+        "score": 3,
+        "reasoning": "This title gives a clever interpretation of the Droodle using a higher-order idea of captivity. The hole becomes a breathing hole in a box in which a frog is held captive and is trying to get out."
+    },
+    {
+        "caption": "A tree tries to play jenga",
+        "droodle": "1",
+        "score": 1,
+        "reasoning": "Not a coherent interpretation of the Droodle and does not make use of any of the strategies."
+    },
+    {
+        "caption": "Bird stuck in a fallen tree",
+        "droodle": "1",
+        "score": 3,
+        "reasoning": "The title casts a new interpretation (a tree) of the horizontal element, which was clever and unique."
+    },
+    {
+        "caption": "Reindeer in a gopher hole",
+        "droodle": "1",
+        "score": 2,
+        "reasoning": "This title gives a version of the animal/person in a hole. It lacks contextual coherence and plausibility."
+    },
+    {
+        "caption": "Someone trying to climb out of an ice hole",
+        "droodle": "1",
+        "score": 3,
+        "reasoning": "This title provides a more active conceptualization that seems more complex that passively “falling in”. Certainly a more unique title."
+    },
+    {
+        "caption": "Help!!!",
+        "droodle": "1",
+        "score": 4,
+        "reasoning": "A classic high Droodle title. It elegantly conveys the meaning of the Droodle without needless description. There is a sense of activeness (and even urgency) that is clever, creative, and compelling."
+    },
+    {
+        "caption": "flying to europe",
+        "droodle": "1",
+        "score": 1,
+        "reasoning": "Not a coherent interpretation of the Droodle and does not make use of any of the strategies."
+    },
+    {
+        "caption": "A very confused ostrich from below",
+        "droodle": "1",
+        "score": 2,
+        "reasoning": "This title is an attempt to do something clever with a pun on ostrich behavior, but ultimately it is not successful because the orientation indicated (“from below”) does more to confuse the viewer than help."
+    },
+    {
+        "caption": "A very, very scared ostrich",
+        "droodle": "1",
+        "score": 4,
+        "reasoning": "The use of a pun on ostrich’s behavior is quite clever (i.e., ostrich put their head in the ground when frightened), as well as the matching the exaggeration of the language (“very, very”) to the exaggeration of the ostrich’s whole body in the sand."
+    },
+    {
+        "caption": "Snowman melting into a puddle",
+        "droodle": "1",
+        "score": 4,
+        "reasoning": "This title provides a move away from the horizontal pull of this Droodle by rotating the orientation 90°. Furthermore, the narration is not of an animal in captivity, but an animal doing something quite natural."
+    },
+    {
+        "caption": "A bird in a hole, upside down",
+        "droodle": "1",
+        "score": 2,
+        "reasoning": "This title reflects the typical interpretation of this Droodle. Not a particularly interesting story-line as is seen in higher codes."
+    }
+]

@@ -72,14 +72,14 @@ class standardConversation:
 
     #PUBLIC MUTATOR FUNCTIONS--------------------------------------------
 
-    #**LEGACY** Main function for continuing the conversation
+    #Main function for continuing the conversation
     def contConversation(self, newMessage: str, imagePath: str = "") -> str:
         timestamp = getTimeStamp() #get timestamp
         message = encodeMessageInternal(newMessage, timestamp, "user", "LLM", image = imagePath) #package message
         outputMessage = self.contConversationDict(message)
         return outputMessage.get("content")
 
-    #Main function for continuing the conversation using a message dict object
+    #Main function for continuing the conversation using a message dict object (more control)
     def contConversationDict(self, newMessage: dict) -> dict:
         startTime = time.time() #start timer
         self.insertMessageDict(newMessage) #Add new message
@@ -115,7 +115,7 @@ class standardConversation:
         self.insertMessageDict(outputMessage)
         return outputMessage
 
-    #**LEGACY** Insert a message into the conversation variable and file
+    #Insert a message into the conversation variable and file
     def insertMessage(self, newMessage: str, role: str, imagePath: str = "", note: str = ""):
         assert role in ("user", "assistant", "system"), "Invalid role given"
         timestamp = getTimeStamp() #get timestamp
@@ -147,6 +147,47 @@ class standardConversation:
         for message in self._conversationInternal:
             message["image_path"] = ""
 
+    def makeTempMessage(self, newMessage: str, imagePath: str = "") -> str:
+        timestamp = getTimeStamp()
+        message = encodeMessageInternal(newMessage, timestamp, "user", "LLM", image = imagePath) #package message
+        outputMessage = self.makeTempMessageDict(message)
+        return outputMessage.get("content")
+
+    # Using the history of the conversation, make a request to the LLM and return the response
+    # DOES NOT RECORD ANY CHANGES TO THE CONVERSATION HISTORY
+    def makeTempMessageDict(self, newMessage: dict) -> str:
+        self._checkMessageDict(newMessage) #Check invariant
+        
+        #Unpack Message
+        content = newMessage.get("content")
+        role = newMessage.get("role")
+        imagePath = newMessage.get("image_path")
+        conversation_copy = self._conversation
+
+        #Make a copy of the conversation and add the new message to it
+        conversation_copy.append(encodeMessage(content, role, imagePath))
+        conversation_copy = self._prepPrompts() + conversation_copy
+
+        #Make a request to the LLM using the new conversation
+        iterations = 0
+        while True:
+            iterations += 1
+            try:
+                outputMessageText = self._makeRequest(tempConversation = conversation_copy)
+                break
+            except conversationErrors.slowDownError as e:
+                logging.warning(f"Slow down error caught, waiting {10*iterations} seconds before trying again")
+                time.sleep(10*iterations); #wait 10 seconds before trying again
+            if iterations > 6:
+                raise conversationErrors.slowDownError("Too many slow down errors")
+
+        #Repack the message into the correct format
+        lastMessage = self._conversationInternal[-1]
+        timestamp = getTimeStamp() #get timestamp
+        assistantType = lastMessage.get("assistant_type")
+        outputMessage = encodeMessageInternal(outputMessageText, timestamp, "assistant", assistantType)
+
+        return outputMessage #return message
 
     #PUBLIC ACCESSOR FUNCTIONS--------------------------------------------
     def getConversation(self) -> list[dict]:
