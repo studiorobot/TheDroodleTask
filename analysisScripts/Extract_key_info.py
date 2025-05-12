@@ -21,6 +21,38 @@ def clean_files(dataset_dir):
                 file_path = os.path.join(root, file)
                 os.remove(file_path)
 
+def convert_files(dataset_dir):
+    """
+    Converts all conversations to text files
+
+    Args:
+        dataset_dir (str): The path to the dataset directory.
+    """
+
+    for root, _, files in os.walk(dataset_dir):
+            for file in files:
+                if file.endswith(".json") and file != "captions.json":
+                    # Get file information
+                    file_path = os.path.join(root, file)
+                    file_name = os.path.basename(file_path)
+                    parent_dir = os.path.dirname(file_path)
+                    folder_name = os.path.basename(parent_dir)
+                    output = ""
+                    with open(file_path, 'r') as f:
+                        # Convert the json into a text file
+                        conversation = json.load(f)
+                        for message in conversation:
+                            message_content = message.get("message", None)
+                            if message_content is None:
+                                message_content = message.get("content", None)
+                            output = output + f"{message.get('role')}> {message_content}\n"
+                    
+                    #Repack the conversation into a text file
+                    new_file = os.path.join(parent_dir, f"{file_name[:-4]}txt")
+                    with open(new_file, 'w') as f:
+                        f.write(output)
+
+
 def extract_captions(dataset_dir):
     """
     Extracts captions from the specified dataset directory.
@@ -66,5 +98,5 @@ def extract_captions(dataset_dir):
 #MAIN SCRIPT
 dataset_directory = "../User Study Archive - Limited Dataset/"  # Adjust the path as needed
 # clean_files(dataset_directory)
-extract_captions(dataset_directory)
-
+# extract_captions(dataset_directory)
+convert_files(dataset_directory)
